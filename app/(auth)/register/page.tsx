@@ -1,59 +1,70 @@
-"use client"
+'use client'
 
-import type React from "react"
-
-import { useState } from "react"
-import Link from "next/link"
-import { Building2 } from "lucide-react"
-import { Button } from "@/components/ui/button"
-import { Input } from "@/components/ui/input"
-import { Label } from "@/components/ui/label"
-import { useAuth } from "@/lib/auth-context"
-import { useToast } from "@/hooks/use-toast"
-import { translations } from "@/lib/pt-BR"
-
-const t = translations.auth
+import { useState, useEffect } from 'react'
+import { useRouter } from 'next/navigation'
+import { useAuth } from '@/app/providers'
+import { Button } from '@/components/ui/button'
+import { Input } from '@/components/ui/input'
+import { Card, CardContent, CardDescription, CardHeader, CardTitle } from '@/components/ui/card'
 
 export default function RegisterPage() {
-  const [name, setName] = useState("")
-  const [email, setEmail] = useState("")
-  const [password, setPassword] = useState("")
-  const [loading, setLoading] = useState(false)
-  const { register } = useAuth()
-  const { toast } = useToast()
+  const [name, setName] = useState('')
+  const [email, setEmail] = useState('')
+  const [password, setPassword] = useState('')
+  const [confirmPassword, setConfirmPassword] = useState('')
+  const [error, setError] = useState('')
+  const [isLoading, setIsLoading] = useState(false)
+  const { register, token } = useAuth()
+  const router = useRouter()
+
+  useEffect(() => {
+    if (token) {
+      router.push('/dashboard')
+    }
+  }, [token, router])
 
   const handleSubmit = async (e: React.FormEvent) => {
     e.preventDefault()
-    setLoading(true)
+    setError('')
 
-    const result = await register(name, email, password)
-
-    if (!result.success) {
-      toast({
-        title: t.registrationFailed,
-        description: result.error,
-        variant: "destructive",
-      })
+    if (password !== confirmPassword) {
+      setError('Senhas não conferem')
+      return
     }
 
-    setLoading(false)
+    if (password.length < 6) {
+      setError('Senha deve ter pelo menos 6 caracteres')
+      return
+    }
+
+    setIsLoading(true)
+
+    try {
+      await register(email, password, name)
+      router.push('/dashboard')
+    } catch (err) {
+      setError('Erro ao criar conta')
+    } finally {
+      setIsLoading(false)
+    }
   }
 
   return (
-    <div className="flex min-h-screen items-center justify-center bg-background p-4">
-      <div className="w-full max-w-md space-y-8">
-        <div className="flex flex-col items-center text-center">
-          <div className="flex h-12 w-12 items-center justify-center rounded-xl bg-primary">
-            <Building2 className="h-7 w-7 text-primary-foreground" />
+    <div className="w-full max-w-md">
+      <Card className="border-0 shadow-lg">
+        <CardHeader className="space-y-2 text-center pb-8">
+          <div className="flex justify-center mb-4">
+            <div className="w-16 h-16 bg-gradient-to-br from-primary to-secondary rounded-lg flex items-center justify-center">
+              <span className="text-white font-bold text-2xl">U</span>
+            </div>
           </div>
-          <h1 className="mt-6 text-3xl font-bold tracking-tight">{t.createAccount}</h1>
-          <p className="mt-2 text-sm text-muted-foreground">{t.getStarted}</p>
-        </div>
-
-        <form onSubmit={handleSubmit} className="space-y-6">
-          <div className="space-y-4">
+          <CardTitle className="text-2xl">URight</CardTitle>
+          <CardDescription>Criar Nova Conta</CardDescription>
+        </CardHeader>
+        <CardContent>
+          <form onSubmit={handleSubmit} className="space-y-4">
             <div className="space-y-2">
-              <Label htmlFor="name">{t.fullName}</Label>
+              <label htmlFor="name" className="text-sm font-medium">Nome Completo</label>
               <Input
                 id="name"
                 type="text"
@@ -61,46 +72,65 @@ export default function RegisterPage() {
                 value={name}
                 onChange={(e) => setName(e.target.value)}
                 required
+                disabled={isLoading}
               />
             </div>
-
             <div className="space-y-2">
-              <Label htmlFor="email">{t.email}</Label>
+              <label htmlFor="email" className="text-sm font-medium">Email</label>
               <Input
                 id="email"
                 type="email"
-                placeholder="name@example.com"
+                placeholder="seu@email.com"
                 value={email}
                 onChange={(e) => setEmail(e.target.value)}
                 required
+                disabled={isLoading}
               />
             </div>
-
             <div className="space-y-2">
-              <Label htmlFor="password">{t.password}</Label>
+              <label htmlFor="password" className="text-sm font-medium">Senha</label>
               <Input
                 id="password"
                 type="password"
+                placeholder="••••••••"
                 value={password}
                 onChange={(e) => setPassword(e.target.value)}
                 required
-                minLength={6}
+                disabled={isLoading}
               />
             </div>
-          </div>
-
-          <Button type="submit" className="w-full" disabled={loading}>
-            {loading ? t.creatingAccount : t.createAccountButton}
-          </Button>
-        </form>
-
-        <p className="text-center text-sm text-muted-foreground">
-          {t.alreadyHaveAccount}{" "}
-          <Link href="/login" className="font-medium text-primary hover:underline">
-            {t.signInButton}
-          </Link>
-        </p>
-      </div>
+            <div className="space-y-2">
+              <label htmlFor="confirm-password" className="text-sm font-medium">Confirmar Senha</label>
+              <Input
+                id="confirm-password"
+                type="password"
+                placeholder="••••••••"
+                value={confirmPassword}
+                onChange={(e) => setConfirmPassword(e.target.value)}
+                required
+                disabled={isLoading}
+              />
+            </div>
+            {error && <p className="text-sm text-destructive">{error}</p>}
+            <Button
+              type="submit"
+              className="w-full bg-primary hover:bg-primary/90"
+              disabled={isLoading}
+            >
+              {isLoading ? 'Criando...' : 'Criar Conta'}
+            </Button>
+            <Button
+              type="button"
+              variant="outline"
+              className="w-full"
+              onClick={() => router.push('/login')}
+              disabled={isLoading}
+            >
+              Voltar ao Login
+            </Button>
+          </form>
+        </CardContent>
+      </Card>
     </div>
   )
 }

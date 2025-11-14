@@ -1,92 +1,107 @@
-"use client"
+'use client'
 
-import type React from "react"
-
-import { useState } from "react"
-import Link from "next/link"
-import { Building2 } from "lucide-react"
-import { Button } from "@/components/ui/button"
-import { Input } from "@/components/ui/input"
-import { Label } from "@/components/ui/label"
-import { useAuth } from "@/lib/auth-context"
-import { useToast } from "@/hooks/use-toast"
-import { translations } from "@/lib/pt-BR"
-
-const t = translations.auth
+import { useState, useEffect } from 'react'
+import { useRouter } from 'next/navigation'
+import { useAuth } from '@/app/providers'
+import { Button } from '@/components/ui/button'
+import { Input } from '@/components/ui/input'
+import { Card, CardContent, CardDescription, CardHeader, CardTitle } from '@/components/ui/card'
 
 export default function LoginPage() {
-  const [email, setEmail] = useState("")
-  const [password, setPassword] = useState("")
-  const [loading, setLoading] = useState(false)
-  const { login } = useAuth()
-  const { toast } = useToast()
+  const [email, setEmail] = useState('')
+  const [password, setPassword] = useState('')
+  const [error, setError] = useState('')
+  const [isLoading, setIsLoading] = useState(false)
+  const { login, token } = useAuth()
+  const router = useRouter()
+
+  useEffect(() => {
+    if (token) {
+      router.push('/dashboard')
+    }
+  }, [token, router])
 
   const handleSubmit = async (e: React.FormEvent) => {
     e.preventDefault()
-    setLoading(true)
+    setError('')
+    setIsLoading(true)
 
-    const result = await login(email, password)
-
-    if (!result.success) {
-      toast({
-        title: t.loginFailed,
-        description: result.error,
-        variant: "destructive",
-      })
+    try {
+      await login(email, password)
+      router.push('/dashboard')
+    } catch (err) {
+      setError('Email ou senha inválidos')
+    } finally {
+      setIsLoading(false)
     }
-
-    setLoading(false)
   }
 
   return (
-    <div className="flex min-h-screen items-center justify-center bg-background p-4">
-      <div className="w-full max-w-md space-y-8">
-        <div className="flex flex-col items-center text-center">
-          <div className="flex h-12 w-12 items-center justify-center rounded-xl bg-primary">
-            <Building2 className="h-7 w-7 text-primary-foreground" />
+    <div className="w-full max-w-md">
+      <Card className="border-0 shadow-lg">
+        <CardHeader className="space-y-2 text-center pb-8">
+          <div className="flex justify-center mb-4">
+            <div className="w-16 h-16 bg-gradient-to-br from-primary to-secondary rounded-lg flex items-center justify-center">
+              <span className="text-white font-bold text-2xl">U</span>
+            </div>
           </div>
-          <h1 className="mt-6 text-3xl font-bold tracking-tight">{t.welcomeBack}</h1>
-          <p className="mt-2 text-sm text-muted-foreground">{t.signIn}</p>
-        </div>
-
-        <form onSubmit={handleSubmit} className="space-y-6">
-          <div className="space-y-4">
+          <CardTitle className="text-2xl">URight</CardTitle>
+          <CardDescription>Gestão de Associações</CardDescription>
+        </CardHeader>
+        <CardContent>
+          <form onSubmit={handleSubmit} className="space-y-4">
             <div className="space-y-2">
-              <Label htmlFor="email">{t.email}</Label>
+              <label htmlFor="email" className="text-sm font-medium">Email</label>
               <Input
                 id="email"
                 type="email"
-                placeholder="name@example.com"
+                placeholder="seu@email.com"
                 value={email}
                 onChange={(e) => setEmail(e.target.value)}
                 required
+                disabled={isLoading}
               />
             </div>
-
             <div className="space-y-2">
-              <Label htmlFor="password">{t.password}</Label>
+              <label htmlFor="password" className="text-sm font-medium">Senha</label>
               <Input
                 id="password"
                 type="password"
+                placeholder="••••••••"
                 value={password}
                 onChange={(e) => setPassword(e.target.value)}
                 required
+                disabled={isLoading}
               />
             </div>
-          </div>
-
-          <Button type="submit" className="w-full" disabled={loading}>
-            {loading ? t.signingIn : t.signInButton}
-          </Button>
-        </form>
-
-        <p className="text-center text-sm text-muted-foreground">
-          {t.dontHaveAccount}{" "}
-          <Link href="/register" className="font-medium text-primary hover:underline">
-            {t.signUp}
-          </Link>
-        </p>
-      </div>
+            {error && <p className="text-sm text-destructive">{error}</p>}
+            <Button
+              type="submit"
+              className="w-full bg-primary hover:bg-primary/90"
+              disabled={isLoading}
+            >
+              {isLoading ? 'Entrando...' : 'Entrar'}
+            </Button>
+            <div className="relative">
+              <div className="absolute inset-0 flex items-center">
+                <span className="w-full border-t border-border"></span>
+              </div>
+              <div className="relative flex justify-center text-xs uppercase">
+                <span className="bg-card px-2 text-muted-foreground">Novo por aqui?</span>
+              </div>
+            </div>
+            <Button
+              type="button"
+              variant="outline"
+              className="w-full"
+              onClick={() => router.push('/register')}
+              disabled={isLoading}
+            >
+              Criar Conta
+            </Button>
+          </form>
+        </CardContent>
+      </Card>
     </div>
   )
 }

@@ -47,10 +47,10 @@ export interface Association {
   id: string
   name: string
   description: string
-  type: "cooperative" | "association" | "union"
-  foundedDate: string
+  type: "cooperativa" | "associacao" | "uniao"
+  createdAt: Date
   memberCount: number
-  status: "active" | "inactive"
+  status: "ativa" | "inativa"
   adminId: string
 }
 
@@ -61,16 +61,16 @@ export interface Member {
   email: string
   phone: string
   joinDate: string
-  status: "active" | "inactive" | "suspended"
-  membershipType: "regular" | "honorary" | "associate"
+  status: "ativo" | "inativo" | "suspenso"
+  membershipType: "regular" | "honorario" | "associado"
 }
 
-export interface Payment {
+export interface Contribution {
   id: string
   memberId: string
   amount: number
-  type: "membership" | "donation" | "event" | "other"
-  status: "pending" | "completed" | "failed" | "refunded"
+  type: "mensalidade" | "doacao" | "evento" | "outra"
+  status: "pendente" | "concluida" | "falhou" | "reembolsada"
   date: string
   description: string
 }
@@ -114,4 +114,80 @@ export interface OnboardingState {
   currentStep: number
   steps: OnboardingStep[]
   completed: boolean
+}
+
+export type AlertType = "system" | "manual" | "automatic"
+export type AlertSeverity = "info" | "warning" | "error" | "success"
+
+export interface Communication {
+  id: string
+  associationId: string
+  type: AlertType
+  severity: AlertSeverity
+  title: string
+  message: string
+  content?: string
+  senderId: string
+  recipients: string[]
+  createdAt: string
+  readAt?: string
+  archived: boolean
+}
+
+export interface FinanceSummary {
+  totalRevenue: number
+  totalExpenses: number
+  balance: number
+  monthlyRevenue: number
+  quarterlyRevenue: number
+  annualRevenue: number
+  pendingPayments: number
+  overduePayments: number
+  overdueMembers: Array<{
+    memberId: string
+    memberName: string
+    amount: number
+    daysOverdue: number
+  }>
+}
+
+export interface FinanceTransaction {
+  id: string
+  associationId: string
+  type: "income" | "expense"
+  category: string
+  description: string
+  amount: number
+  date: string
+  paymentMethod: string
+  reference?: string
+  createdById: string
+  createdAt: string
+}
+
+export interface HistoryEntry {
+  id: string
+  entityId: string
+  entityType: "member" | "payment" | "event" | "communication"
+  action: "created" | "updated" | "deleted" | "status_changed"
+  description: string
+  changedBy: string
+  timestamp: string
+  details?: Record<string, any>
+}
+
+export interface EventRSVP {
+  id: string
+  eventId: string
+  memberId: string
+  status: "confirmed" | "declined" | "pending"
+  responseDate: string
+}
+
+export interface EventAttendance {
+  id: string
+  eventId: string
+  memberId: string
+  status: "present" | "absent" | "pending"
+  markedAt: string
 }

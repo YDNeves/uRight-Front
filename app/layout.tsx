@@ -1,17 +1,16 @@
-import type React from "react"
-import type { Metadata } from "next"
-import { Inter, JetBrains_Mono } from "next/font/google"
-import "./globals.css"
-import { AuthProvider } from "@/lib/auth-context"
-import { Toaster } from "@/components/ui/toaster"
+import type { Metadata } from 'next'
+import { Geist, Geist_Mono } from 'next/font/google'
+import { Analytics } from '@vercel/analytics/next'
+import { AuthProvider } from '@/app/providers'
+import './globals.css'
 
-const inter = Inter({ subsets: ["latin"] })
-const jetbrainsMono = JetBrains_Mono({ subsets: ["latin"] })
+const _geist = Geist({ subsets: ["latin"] })
+const _geistMono = Geist_Mono({ subsets: ["latin"] })
 
 export const metadata: Metadata = {
-  title: "AssoGest - Association Management System",
-  description: "Comprehensive management system for associations and cooperatives",
-    generator: 'v0.app'
+  title: 'URight Dashboard',
+  description: 'Gestão completa de associações, membros e finanças',
+  generator: 'v0.app',
 }
 
 export default function RootLayout({
@@ -20,12 +19,12 @@ export default function RootLayout({
   children: React.ReactNode
 }) {
   return (
-    <html lang="en" className="dark">
-      <body className={inter.className}>
+    <html lang="pt-BR">
+      <body className={`font-sans antialiased`}>
         <AuthProvider>
           {children}
-          <Toaster />
         </AuthProvider>
+        <Analytics />
       </body>
     </html>
   )
