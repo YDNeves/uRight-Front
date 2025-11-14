@@ -1,7 +1,7 @@
-const API_BASE_URL = process.env.NEXT_PUBLIC_API_URL || "http://localhost:3001/api"
-
 import { parseCookies } from "nookies"
 import axios, { AxiosInstance, AxiosError } from "axios"
+
+const API_BASE_URL = process.env.NEXT_PUBLIC_API_URL || "http://localhost:3001/api"
 
 const axiosInstance: AxiosInstance = axios.create({
   baseURL: API_BASE_URL,

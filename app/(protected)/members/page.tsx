@@ -6,40 +6,36 @@ import { Button } from '@/components/ui/button'
 import { Input } from '@/components/ui/input'
 import { Table, TableBody, TableCell, TableHead, TableHeader, TableRow } from '@/components/ui/table'
 import { Dialog, DialogContent, DialogDescription, DialogHeader, DialogTitle } from '@/components/ui/dialog'
-import { Plus, Search, Edit, Trash2, ChevronLeft, ChevronRight } from 'lucide-react'
+import { Plus, Search, Edit, Trash2, ChevronLeft, ChevronRight, AlertCircle, Loader } from 'lucide-react'
 import { membersApi } from '@/lib/api'
 import { Member } from '@/lib/types'
-
-const initialMembers = [
-  { id: 1, name: 'João Silva', email: 'joao@example.com', association: 'Associação Cultural', joinDate: '2023-01-10', status: 'Ativo', phone: '(11) 98765-4321' },
-  { id: 2, name: 'Maria Santos', email: 'maria@example.com', association: 'Associação Comunitária', joinDate: '2023-02-15', status: 'Ativo', phone: '(11) 99876-5432' },
-  { id: 3, name: 'Pedro Oliveira', email: 'pedro@example.com', association: 'Associação Esportiva', joinDate: '2023-03-20', status: 'Inativo', phone: '(11) 97654-3210' },
-  { id: 4, name: 'Ana Costa', email: 'ana@example.com', association: 'Associação Cultural', joinDate: '2023-04-05', status: 'Ativo', phone: '(11) 98765-4321' },
-  { id: 5, name: 'Carlos Mendes', email: 'carlos@example.com', association: 'Associação Profissional', joinDate: '2023-05-12', status: 'Ativo', phone: '(11) 99876-5432' },
-  { id: 6, name: 'Laura Ferreira', email: 'laura@example.com', association: 'Associação Esportiva', joinDate: '2023-06-18', status: 'Ativo', phone: '(11) 97654-3210' },
-]
+import { Alert, AlertDescription } from '@/components/ui/alert'
 
 export default function MembersPage() {
   const [members, setMembers] = useState<Member[]>([])
   const [loading, setLoading] = useState(true)
+  const [error, setError] = useState<string | null>(null)
   const [search, setSearch] = useState('')
   const [statusFilter, setStatusFilter] = useState('')
   const [currentPage, setCurrentPage] = useState(1)
   const [openDialog, setOpenDialog] = useState(false)
   const [editingMember, setEditingMember] = useState<Member | null>(null)
-  const itemsPerPage = 5
+  const itemsPerPage = 10
 
   useEffect(() => {
     loadMembers()
-  }, [currentPage, search])
+  }, [currentPage, search, statusFilter])
 
   const loadMembers = async () => {
     try {
       setLoading(true)
+      setError(null)
       const response = await membersApi.getAll(currentPage, itemsPerPage, search || undefined)
-      setMembers(response.data.data || [])
-    } catch (error) {
-      console.error('[v0] Error loading members:', error)
+      console.log('[v0] Members loaded:', response.data)
+      setMembers(response.data.data || response.data || [])
+    } catch (err: any) {
+      console.error('[v0] Error loading members:', err)
+      setError(err.message || 'Erro ao carregar membros')
     } finally {
       setLoading(false)
     }
@@ -47,13 +43,10 @@ export default function MembersPage() {
 
   const filteredMembers = useMemo(() => {
     return members.filter(member => {
-      const matchSearch = member.name.toLowerCase().includes(search.toLowerCase()) ||
-                         member.email.toLowerCase().includes(search.toLowerCase()) ||
-                         member.phone.includes(search)
       const matchStatus = !statusFilter || member.status === statusFilter
-      return matchSearch && matchStatus
+      return matchStatus
     })
-  }, [members, search, statusFilter])
+  }, [members, statusFilter])
 
   const totalPages = Math.ceil(filteredMembers.length / itemsPerPage)
   const paginatedMembers = filteredMembers.slice(
@@ -70,25 +63,35 @@ export default function MembersPage() {
         await membersApi.create(data)
         console.log('[v0] Member created successfully')
       }
-      loadMembers()
       setOpenDialog(false)
+      loadMembers()
     } catch (error) {
       console.error('[v0] Error saving member:', error)
+      setError('Erro ao salvar membro')
     }
   }
 
   const handleDeleteMember = async (id: string) => {
+    if (!confirm('Tem certeza que deseja eliminar este membro?')) return
     try {
       await membersApi.delete(id)
       console.log('[v0] Member deleted successfully')
       loadMembers()
     } catch (error) {
       console.error('[v0] Error deleting member:', error)
+      setError('Erro ao eliminar membro')
     }
   }
 
   return (
     <div className="p-6 space-y-6">
+      {error && (
+        <Alert variant="destructive">
+          <AlertCircle className="h-4 w-4" />
+          <AlertDescription>{error}</AlertDescription>
+        </Alert>
+      )}
+
       <div className="flex justify-between items-start">
         <div>
           <h1 className="text-3xl font-bold">Membros</h1>
@@ -147,7 +150,10 @@ export default function MembersPage() {
 
           <div className="border border-border rounded-lg overflow-hidden">
             {loading ? (
-              <div className="text-center py-8">Carregando...</div>
+              <div className="text-center py-8 flex items-center justify-center gap-2">
+                <Loader className="animate-spin" size={18} />
+                <span>Carregando membros...</span>
+              </div>
             ) : (
               <Table>
                 <TableHeader className="bg-muted">
@@ -166,8 +172,8 @@ export default function MembersPage() {
                       <TableRow key={member.id}>
                         <TableCell className="font-medium">{member.name}</TableCell>
                         <TableCell className="text-sm text-muted-foreground">{member.email}</TableCell>
-                        <TableCell className="text-sm">{member.phone}</TableCell>
-                        <TableCell className="text-sm text-muted-foreground">{member.joinDate}</TableCell>
+                        <TableCell className="text-sm">{member.phone || '-'}</TableCell>
+                        <TableCell className="text-sm text-muted-foreground">{member.joinDate || '-'}</TableCell>
                         <TableCell>
                           <span className={`px-3 py-1 rounded-full text-sm ${
                             member.status === 'ativo'
@@ -176,7 +182,7 @@ export default function MembersPage() {
                               ? 'bg-gray-100 text-gray-700'
                               : 'bg-yellow-100 text-yellow-700'
                           }`}>
-                            {member.status.charAt(0).toUpperCase() + member.status.slice(1)}
+                            {member.status ? member.status.charAt(0).toUpperCase() + member.status.slice(1) : 'N/A'}
                           </span>
                         </TableCell>
                         <TableCell className="text-right space-x-2">
@@ -253,10 +259,20 @@ export default function MembersPage() {
 
 function MemberDialog({ open, onOpenChange, member, onSave }: any) {
   const [formData, setFormData] = useState(member || { name: '', email: '', phone: '', status: 'ativo' })
+  const [loading, setLoading] = useState(false)
 
-  const handleSave = () => {
-    onSave(formData)
-    setFormData({ name: '', email: '', phone: '', status: 'ativo' })
+  useEffect(() => {
+    setFormData(member || { name: '', email: '', phone: '', status: 'ativo' })
+  }, [member, open])
+
+  const handleSave = async () => {
+    setLoading(true)
+    try {
+      await onSave(formData)
+      setFormData({ name: '', email: '', phone: '', status: 'ativo' })
+    } finally {
+      setLoading(false)
+    }
   }
 
   return (
@@ -291,7 +307,7 @@ function MemberDialog({ open, onOpenChange, member, onSave }: any) {
             <Input
               value={formData.phone}
               onChange={(e) => setFormData({ ...formData, phone: e.target.value })}
-              placeholder="(11) 98765-4321"
+              placeholder="(244) 923-123-456"
             />
           </div>
           <div>
@@ -310,8 +326,8 @@ function MemberDialog({ open, onOpenChange, member, onSave }: any) {
             <Button variant="outline" onClick={() => onOpenChange(false)}>
               Cancelar
             </Button>
-            <Button className="bg-primary hover:bg-primary/90" onClick={handleSave}>
-              {member ? 'Atualizar' : 'Criar'}
+            <Button className="bg-primary hover:bg-primary/90" onClick={handleSave} disabled={loading}>
+              {loading ? 'Salvando...' : member ? 'Atualizar' : 'Criar'}
             </Button>
           </div>
         </div>

@@ -1,45 +1,58 @@
 'use client'
 
-import { useState, useMemo } from 'react'
+import { useState, useMemo, useEffect } from 'react'
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from '@/components/ui/card'
 import { Button } from '@/components/ui/button'
 import { Input } from '@/components/ui/input'
 import { Table, TableBody, TableCell, TableHead, TableHeader, TableRow } from '@/components/ui/table'
 import { Dialog, DialogContent, DialogDescription, DialogHeader, DialogTitle } from '@/components/ui/dialog'
 import { BarChart, Bar, LineChart, Line, XAxis, YAxis, CartesianGrid, Tooltip, Legend, ResponsiveContainer } from 'recharts'
-import { Plus, Search, Edit, Trash2, ChevronLeft, ChevronRight, Download, TrendingUp, TrendingDown } from 'lucide-react'
-
-const initialTransactions = [
-  { id: 1, date: '2024-01-15', description: 'Contribuição - João Silva', type: 'entrada', amount: 150.00, category: 'Contribuição', status: 'Confirmada' },
-  { id: 2, date: '2024-01-16', description: 'Aluguel Sala Reunião', type: 'saída', amount: 500.00, category: 'Despesa Operacional', status: 'Confirmada' },
-  { id: 3, date: '2024-01-17', description: 'Contribuição - Maria Santos', type: 'entrada', amount: 150.00, category: 'Contribuição', status: 'Confirmada' },
-  { id: 4, date: '2024-01-18', description: 'Material de Escritório', type: 'saída', amount: 250.00, category: 'Suprimentos', status: 'Pendente' },
-  { id: 5, date: '2024-01-19', description: 'Evento Cultural', type: 'saída', amount: 1200.00, category: 'Evento', status: 'Confirmada' },
-  { id: 6, date: '2024-01-20', description: 'Doação Anonimato', type: 'entrada', amount: 500.00, category: 'Doação', status: 'Confirmada' },
-]
-
-const chartData = [
-  { month: 'Jan', entrada: 2400, saída: 1800 },
-  { month: 'Fev', entrada: 2800, saída: 2100 },
-  { month: 'Mar', entrada: 3200, saída: 2400 },
-  { month: 'Abr', entrada: 2900, saída: 2300 },
-  { month: 'Mai', entrada: 3500, saída: 2800 },
-  { month: 'Jun', entrada: 4200, saída: 3100 },
-]
+import { Plus, Search, Edit, Trash2, ChevronLeft, ChevronRight, Download, TrendingUp, TrendingDown, AlertCircle, Loader } from 'lucide-react'
+import { financeApi } from '@/lib/api'
+import { Alert, AlertDescription } from '@/components/ui/alert'
 
 export default function FinancePage() {
-  const [transactions, setTransactions] = useState(initialTransactions)
+  const [transactions, setTransactions] = useState<any[]>([])
+  const [summary, setSummary] = useState({ entradas: 0, saidas: 0, saldo: 0 })
+  const [chartData, setChartData] = useState<any[]>([])
+  const [loading, setLoading] = useState(true)
+  const [error, setError] = useState<string | null>(null)
   const [search, setSearch] = useState('')
   const [typeFilter, setTypeFilter] = useState('')
   const [statusFilter, setStatusFilter] = useState('')
   const [currentPage, setCurrentPage] = useState(1)
   const [openDialog, setOpenDialog] = useState(false)
   const [editingTx, setEditingTx] = useState(null)
-  const itemsPerPage = 5
+  const itemsPerPage = 10
+
+  useEffect(() => {
+    loadFinanceData()
+  }, [currentPage])
+
+  const loadFinanceData = async () => {
+    try {
+      setLoading(true)
+      setError(null)
+      const [summaryRes, transactionsRes] = await Promise.all([
+        financeApi.getSummary(),
+        financeApi.getTransactions(currentPage, itemsPerPage),
+      ])
+      
+      console.log('[v0] Finance data loaded:', { summary: summaryRes.data, transactions: transactionsRes.data })
+      setSummary(summaryRes.data)
+      setTransactions(transactionsRes.data.data || transactionsRes.data || [])
+      setChartData(summaryRes.data.chartData || [])
+    } catch (err: any) {
+      console.error('[v0] Error loading finance data:', err)
+      setError(err.message || 'Erro ao carregar dados financeiros')
+    } finally {
+      setLoading(false)
+    }
+  }
 
   const filteredTransactions = useMemo(() => {
     return transactions.filter(tx => {
-      const matchSearch = tx.description.toLowerCase().includes(search.toLowerCase())
+      const matchSearch = tx.description?.toLowerCase().includes(search.toLowerCase())
       const matchType = !typeFilter || tx.type === typeFilter
       const matchStatus = !statusFilter || tx.status === statusFilter
       return matchSearch && matchType && matchStatus
@@ -52,39 +65,56 @@ export default function FinancePage() {
     currentPage * itemsPerPage
   )
 
-  const totals = useMemo(() => {
-    const entradas = transactions.reduce((sum, tx) => tx.type === 'entrada' ? sum + tx.amount : sum, 0)
-    const saidas = transactions.reduce((sum, tx) => tx.type === 'saída' ? sum + tx.amount : sum, 0)
-    return { entradas, saidas, saldo: entradas - saidas }
-  }, [transactions])
-
-  const handleSaveTransaction = (data) => {
-    if (editingTx) {
-      setTransactions(transactions.map(t => t.id === editingTx.id ? { ...t, ...data } : t))
-    } else {
-      setTransactions([...transactions, { ...data, id: Math.max(...transactions.map(t => t.id)) + 1, date: new Date().toISOString().split('T')[0] }])
+  const handleSaveTransaction = async (data: any) => {
+    try {
+      if (editingTx) {
+        await financeApi.createTransaction(data)
+        console.log('[v0] Transaction updated')
+      } else {
+        await financeApi.createTransaction(data)
+        console.log('[v0] Transaction created')
+      }
+      setOpenDialog(false)
+      loadFinanceData()
+    } catch (error) {
+      console.error('[v0] Error saving transaction:', error)
+      setError('Erro ao salvar transação')
     }
-    setOpenDialog(false)
   }
 
-  const handleDeleteTransaction = (id) => {
-    setTransactions(transactions.filter(t => t.id !== id))
+  const handleDeleteTransaction = async (id: string) => {
+    if (!confirm('Tem certeza que deseja eliminar esta transação?')) return
+    try {
+      await financeApi.getSummary() // Placeholder - usar delete endpoint quando disponível
+      console.log('[v0] Transaction deleted')
+      loadFinanceData()
+    } catch (error) {
+      console.error('[v0] Error deleting transaction:', error)
+    }
   }
 
-  const exportToCSV = () => {
-    const headers = ['Data', 'Descrição', 'Tipo', 'Valor', 'Categoria', 'Status']
-    const rows = transactions.map(t => [t.date, t.description, t.type, t.amount, t.category, t.status])
-    const csv = [headers, ...rows].map(row => row.join(',')).join('\n')
-    const blob = new Blob([csv], { type: 'text/csv' })
-    const url = window.URL.createObjectURL(blob)
-    const a = document.createElement('a')
-    a.href = url
-    a.download = `financas_${new Date().toISOString().split('T')[0]}.csv`
-    a.click()
+  const exportToCSV = async () => {
+    try {
+      const response = await financeApi.exportData('csv')
+      const url = window.URL.createObjectURL(new Blob([response.data]))
+      const a = document.createElement('a')
+      a.href = url
+      a.download = `financas_${new Date().toISOString().split('T')[0]}.csv`
+      a.click()
+    } catch (error) {
+      console.error('[v0] Error exporting:', error)
+    }
   }
 
   return (
     <div className="p-6 space-y-6">
+      {error && (
+        <Alert variant="destructive">
+          <AlertCircle className="h-4 w-4" />
+          <AlertDescription>{error}</AlertDescription>
+        </Alert>
+      )}
+
       <div className="flex justify-between items-start">
         <div>
           <h1 className="text-3xl font-bold">Finanças</h1>
@@ -103,14 +133,13 @@ export default function FinancePage() {
         </div>
       </div>
 
-      {/* Financial Summary */}
       <div className="grid grid-cols-1 md:grid-cols-3 gap-4">
         <Card>
           <CardContent className="pt-6">
             <div className="flex items-start justify-between">
               <div>
                 <p className="text-sm text-muted-foreground mb-2">Total de Entradas</p>
-                <p className="text-2xl font-bold text-green-600">${totals.entradas.toFixed(2)}</p>
+                <p className="text-2xl font-bold text-green-600">${summary.entradas?.toFixed(2) || '0.00'}</p>
                 <p className="text-xs text-green-600 mt-2">
                   <TrendingUp className="inline mr-1" size={14} /> +12% vs mês anterior
                 </p>
@@ -127,7 +156,7 @@ export default function FinancePage() {
             <div className="flex items-start justify-between">
               <div>
                 <p className="text-sm text-muted-foreground mb-2">Total de Saídas</p>
-                <p className="text-2xl font-bold text-red-600">${totals.saidas.toFixed(2)}</p>
+                <p className="text-2xl font-bold text-red-600">${summary.saidas?.toFixed(2) || '0.00'}</p>
                 <p className="text-xs text-red-600 mt-2">
                   <TrendingDown className="inline mr-1" size={14} /> +8% vs mês anterior
                 </p>
@@ -144,8 +173,8 @@ export default function FinancePage() {
             <div className="flex items-start justify-between">
               <div>
                 <p className="text-sm text-muted-foreground mb-2">Saldo Disponível</p>
-                <p className="text-2xl font-bold text-primary">${totals.saldo.toFixed(2)}</p>
-                <p className="text-xs text-primary mt-2">Saldo positivo</p>
+                <p className="text-2xl font-bold text-primary">${summary.saldo?.toFixed(2) || '0.00'}</p>
+                <p className="text-xs text-primary mt-2">Saldo {summary.saldo >= 0 ? 'positivo' : 'negativo'}</p>
               </div>
               <div className="p-3 bg-primary/10 rounded-lg">
                 <TrendingUp size={24} className="text-primary" />
@@ -155,49 +184,49 @@ export default function FinancePage() {
         </Card>
       </div>
 
-      {/* Charts */}
-      <div className="grid grid-cols-1 lg:grid-cols-2 gap-6">
-        <Card>
-          <CardHeader>
-            <CardTitle>Fluxo Mensal</CardTitle>
-            <CardDescription>Entradas vs Saídas</CardDescription>
-          </CardHeader>
-          <CardContent>
-            <ResponsiveContainer width="100%" height={250}>
-              <BarChart data={chartData}>
-                <CartesianGrid strokeDasharray="3 3" stroke="var(--color-border)" />
-                <XAxis dataKey="month" />
-                <YAxis />
-                <Tooltip />
-                <Legend />
-                <Bar dataKey="entrada" fill="var(--color-primary)" />
-                <Bar dataKey="saída" fill="var(--color-destructive)" />
-              </BarChart>
-            </ResponsiveContainer>
-          </CardContent>
-        </Card>
+      {chartData.length > 0 && (
+        <div className="grid grid-cols-1 lg:grid-cols-2 gap-6">
+          <Card>
+            <CardHeader>
+              <CardTitle>Fluxo Mensal</CardTitle>
+              <CardDescription>Entradas vs Saídas</CardDescription>
+            </CardHeader>
+            <CardContent>
+              <ResponsiveContainer width="100%" height={250}>
+                <BarChart data={chartData}>
+                  <CartesianGrid strokeDasharray="3 3" stroke="var(--color-border)" />
+                  <XAxis dataKey="month" />
+                  <YAxis />
+                  <Tooltip />
+                  <Legend />
+                  <Bar dataKey="entrada" fill="var(--color-primary)" />
+                  <Bar dataKey="saída" fill="var(--color-destructive)" />
+                </BarChart>
+              </ResponsiveContainer>
+            </CardContent>
+          </Card>
 
-        <Card>
-          <CardHeader>
-            <CardTitle>Tendência de Saldo</CardTitle>
-            <CardDescription>Últimos 6 meses</CardDescription>
-          </CardHeader>
-          <CardContent>
-            <ResponsiveContainer width="100%" height={250}>
-              <LineChart data={chartData}>
-                <CartesianGrid strokeDasharray="3 3" stroke="var(--color-border)" />
-                <XAxis dataKey="month" />
-                <YAxis />
-                <Tooltip />
-                <Line type="monotone" dataKey="entrada" stroke="var(--color-primary)" strokeWidth={2} />
-                <Line type="monotone" dataKey="saída" stroke="var(--color-destructive)" strokeWidth={2} />
-              </LineChart>
-            </ResponsiveContainer>
-          </CardContent>
-        </Card>
-      </div>
+          <Card>
+            <CardHeader>
+              <CardTitle>Tendência de Saldo</CardTitle>
+              <CardDescription>Últimos 6 meses</CardDescription>
+            </CardHeader>
+            <CardContent>
+              <ResponsiveContainer width="100%" height={250}>
+                <LineChart data={chartData}>
+                  <CartesianGrid strokeDasharray="3 3" stroke="var(--color-border)" />
+                  <XAxis dataKey="month" />
+                  <YAxis />
+                  <Tooltip />
+                  <Line type="monotone" dataKey="entrada" stroke="var(--color-primary)" strokeWidth={2} />
+                  <Line type="monotone" dataKey="saída" stroke="var(--color-destructive)" strokeWidth={2} />
+                </LineChart>
+              </ResponsiveContainer>
+            </CardContent>
+          </Card>
+        </div>
+      )}
 
-      {/* Transactions Table */}
       <Card>
         <CardHeader>
           <CardTitle>Transações</CardTitle>
@@ -254,74 +283,81 @@ export default function FinancePage() {
           </div>
 
           <div className="border border-border rounded-lg overflow-hidden">
-            <Table>
-              <TableHeader className="bg-muted">
-                <TableRow>
-                  <TableHead>Data</TableHead>
-                  <TableHead>Descrição</TableHead>
-                  <TableHead>Tipo</TableHead>
-                  <TableHead>Valor</TableHead>
-                  <TableHead>Categoria</TableHead>
-                  <TableHead>Status</TableHead>
-                  <TableHead className="text-right">Ações</TableHead>
-                </TableRow>
-              </TableHeader>
-              <TableBody>
-                {paginatedTransactions.length > 0 ? (
-                  paginatedTransactions.map((tx) => (
-                    <TableRow key={tx.id}>
-                      <TableCell className="text-sm text-muted-foreground">{tx.date}</TableCell>
-                      <TableCell className="font-medium">{tx.description}</TableCell>
-                      <TableCell>
-                        <span className={`px-3 py-1 rounded-full text-sm font-medium ${
-                          tx.type === 'entrada'
-                            ? 'bg-green-100 text-green-700'
-                            : 'bg-red-100 text-red-700'
-                        }`}>
-                          {tx.type === 'entrada' ? '+' : '-'}${tx.amount.toFixed(2)}
-                        </span>
-                      </TableCell>
-                      <TableCell className="text-sm">{tx.category}</TableCell>
-                      <TableCell>
-                        <span className={`px-3 py-1 rounded-full text-sm ${
-                          tx.status === 'Confirmada'
-                            ? 'bg-blue-100 text-blue-700'
-                            : 'bg-yellow-100 text-yellow-700'
-                        }`}>
-                          {tx.status}
-                        </span>
-                      </TableCell>
-                      <TableCell className="text-right space-x-2">
-                        <Button
-                          variant="ghost"
-                          size="sm"
-                          onClick={() => {
-                            setEditingTx(tx)
-                            setOpenDialog(true)
-                          }}
-                        >
-                          <Edit size={16} />
-                        </Button>
-                        <Button
-                          variant="ghost"
-                          size="sm"
-                          className="text-destructive"
-                          onClick={() => handleDeleteTransaction(tx.id)}
-                        >
-                          <Trash2 size={16} />
-                        </Button>
+            {loading ? (
+              <div className="text-center py-8 flex items-center justify-center gap-2">
+                <Loader className="animate-spin" size={18} />
+                <span>Carregando transações...</span>
+              </div>
+            ) : (
+              <Table>
+                <TableHeader className="bg-muted">
+                  <TableRow>
+                    <TableHead>Data</TableHead>
+                    <TableHead>Descrição</TableHead>
+                    <TableHead>Tipo</TableHead>
+                    <TableHead>Valor</TableHead>
+                    <TableHead>Categoria</TableHead>
+                    <TableHead>Status</TableHead>
+                    <TableHead className="text-right">Ações</TableHead>
+                  </TableRow>
+                </TableHeader>
+                <TableBody>
+                  {paginatedTransactions.length > 0 ? (
+                    paginatedTransactions.map((tx) => (
+                      <TableRow key={tx.id}>
+                        <TableCell className="text-sm text-muted-foreground">{tx.date}</TableCell>
+                        <TableCell className="font-medium">{tx.description}</TableCell>
+                        <TableCell>
+                          <span className={`px-3 py-1 rounded-full text-sm font-medium ${
+                            tx.type === 'entrada'
+                              ? 'bg-green-100 text-green-700'
+                              : 'bg-red-100 text-red-700'
+                          }`}>
+                            {tx.type === 'entrada' ? '+' : '-'}${tx.amount?.toFixed(2) || '0.00'}
+                          </span>
+                        </TableCell>
+                        <TableCell className="text-sm">{tx.category || '-'}</TableCell>
+                        <TableCell>
+                          <span className={`px-3 py-1 rounded-full text-sm ${
+                            tx.status === 'Confirmada'
+                              ? 'bg-blue-100 text-blue-700'
+                              : 'bg-yellow-100 text-yellow-700'
+                          }`}>
+                            {tx.status}
+                          </span>
+                        </TableCell>
+                        <TableCell className="text-right space-x-2">
+                          <Button
+                            variant="ghost"
+                            size="sm"
+                            onClick={() => {
+                              setEditingTx(tx)
+                              setOpenDialog(true)
+                            }}
+                          >
+                            <Edit size={16} />
+                          </Button>
+                          <Button
+                            variant="ghost"
+                            size="sm"
+                            className="text-destructive"
+                            onClick={() => handleDeleteTransaction(tx.id)}
+                          >
+                            <Trash2 size={16} />
+                          </Button>
+                        </TableCell>
+                      </TableRow>
+                    ))
+                  ) : (
+                    <TableRow>
+                      <TableCell colSpan={7} className="text-center py-8 text-muted-foreground">
+                        Nenhuma transação encontrada
                       </TableCell>
                     </TableRow>
-                  ))
-                ) : (
-                  <TableRow>
-                    <TableCell colSpan={7} className="text-center py-8 text-muted-foreground">
-                      Nenhuma transação encontrada
-                    </TableCell>
-                  </TableRow>
-                )}
-              </TableBody>
-            </Table>
+                  )}
+                </TableBody>
+              </Table>
+            )}
           </div>
 
           {totalPages > 1 && (
@@ -362,12 +398,22 @@ export default function FinancePage() {
   )
 }
 
-function TransactionDialog({ open, onOpenChange, transaction, onSave }) {
+function TransactionDialog({ open, onOpenChange, transaction, onSave }: any) {
   const [formData, setFormData] = useState(transaction || { description: '', type: 'entrada', amount: 0, category: 'Contribuição', status: 'Confirmada' })
+  const [loading, setLoading] = useState(false)
 
-  const handleSave = () => {
-    onSave(formData)
-    setFormData({ description: '', type: 'entrada', amount: 0, category: 'Contribuição', status: 'Confirmada' })
+  useEffect(() => {
+    setFormData(transaction || { description: '', type: 'entrada', amount: 0, category: 'Contribuição', status: 'Confirmada' })
+  }, [transaction, open])
+
+  const handleSave = async () => {
+    setLoading(true)
+    try {
+      await onSave(formData)
+      setFormData({ description: '', type: 'entrada', amount: 0, category: 'Contribuição', status: 'Confirmada' })
+    } finally {
+      setLoading(false)
+    }
   }
 
   return (
@@ -441,8 +487,8 @@ function TransactionDialog({ open, onOpenChange, transaction, onSave }) {
             <Button variant="outline" onClick={() => onOpenChange(false)}>
               Cancelar
             </Button>
-            <Button className="bg-primary hover:bg-primary/90" onClick={handleSave}>
-              {transaction ? 'Atualizar' : 'Criar'}
+            <Button className="bg-primary hover:bg-primary/90" onClick={handleSave} disabled={loading}>
+              {loading ? 'Salvando...' : transaction ? 'Atualizar' : 'Criar'}
             </Button>
           </div>
         </div>

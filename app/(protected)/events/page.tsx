@@ -1,35 +1,50 @@
 'use client'
 
-import { useState, useMemo } from 'react'
+import { useState, useMemo, useEffect } from 'react'
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from '@/components/ui/card'
 import { Button } from '@/components/ui/button'
 import { Input } from '@/components/ui/input'
 import { Table, TableBody, TableCell, TableHead, TableHeader, TableRow } from '@/components/ui/table'
 import { Dialog, DialogContent, DialogDescription, DialogHeader, DialogTitle } from '@/components/ui/dialog'
-import { Plus, Search, Edit, Trash2, ChevronLeft, ChevronRight, Calendar, Users, MapPin, Clock } from 'lucide-react'
-
-const initialEvents = [
-  { id: 1, name: 'Assembléia Geral', date: '2024-02-15', time: '19:00', location: 'Sala Principal', category: 'Administrativa', attendees: 45, capacity: 100, status: 'Agendado' },
-  { id: 2, name: 'Workshop de Tecnologia', date: '2024-02-20', time: '14:00', location: 'Auditório', category: 'Educação', attendees: 32, capacity: 50, status: 'Agendado' },
-  { id: 3, name: 'Evento Esportivo', date: '2024-02-25', time: '09:00', location: 'Quadra', category: 'Esporte', attendees: 78, capacity: 80, status: 'Agendado' },
-  { id: 4, name: 'Café da Manhã de Boas-vindas', date: '2024-01-30', time: '08:00', location: 'Cafeteria', category: 'Social', attendees: 62, capacity: 100, status: 'Realizado' },
-  { id: 5, name: 'Reunião de Diretoria', date: '2024-02-10', time: '15:00', location: 'Sala Executiva', category: 'Administrativa', attendees: 12, capacity: 20, status: 'Agendado' },
-]
+import { Plus, Search, Edit, Trash2, ChevronLeft, ChevronRight, Calendar, Users, MapPin, Clock, AlertCircle, Loader } from 'lucide-react'
+import { eventsApi } from '@/lib/api'
+import { Alert, AlertDescription } from '@/components/ui/alert'
 
 export default function EventsPage() {
-  const [events, setEvents] = useState(initialEvents)
+  const [events, setEvents] = useState<any[]>([])
+  const [loading, setLoading] = useState(true)
+  const [error, setError] = useState<string | null>(null)
   const [search, setSearch] = useState('')
   const [categoryFilter, setCategoryFilter] = useState('')
   const [statusFilter, setStatusFilter] = useState('')
   const [currentPage, setCurrentPage] = useState(1)
   const [openDialog, setOpenDialog] = useState(false)
   const [editingEvent, setEditingEvent] = useState(null)
-  const itemsPerPage = 5
+  const itemsPerPage = 10
+
+  useEffect(() => {
+    loadEvents()
+  }, [currentPage, search])
+
+  const loadEvents = async () => {
+    try {
+      setLoading(true)
+      setError(null)
+      const response = await eventsApi.getAll(currentPage, itemsPerPage)
+      console.log('[v0] Events loaded:', response.data)
+      setEvents(response.data.data || response.data || [])
+    } catch (err: any) {
+      console.error('[v0] Error loading events:', err)
+      setError(err.message || 'Erro ao carregar eventos')
+    } finally {
+      setLoading(false)
+    }
+  }
 
   const filteredEvents = useMemo(() => {
     return events.filter(event => {
-      const matchSearch = event.name.toLowerCase().includes(search.toLowerCase()) ||
-                         event.location.toLowerCase().includes(search.toLowerCase())
+      const matchSearch = event.name?.toLowerCase().includes(search.toLowerCase()) ||
+                         event.location?.toLowerCase().includes(search.toLowerCase())
       const matchCategory = !categoryFilter || event.category === categoryFilter
       const matchStatus = !statusFilter || event.status === statusFilter
       return matchSearch && matchCategory && matchStatus
@@ -44,25 +59,47 @@ export default function EventsPage() {
 
   const stats = useMemo(() => {
     const upcoming = events.filter(e => e.status === 'Agendado').length
-    const totalAttendees = events.reduce((sum, e) => sum + e.attendees, 0)
+    const totalAttendees = events.reduce((sum, e) => sum + (e.attendees || 0), 0)
     return { upcoming, totalAttendees }
   }, [events])
 
-  const handleSaveEvent = (data) => {
-    if (editingEvent) {
-      setEvents(events.map(e => e.id === editingEvent.id ? { ...e, ...data } : e))
-    } else {
-      setEvents([...events, { ...data, id: Math.max(...events.map(e => e.id)) + 1 }])
+  const handleSaveEvent = async (data: any) => {
+    try {
+      if (editingEvent) {
+        await eventsApi.update(editingEvent.id, data)
+        console.log('[v0] Event updated')
+      } else {
+        await eventsApi.create(data)
+        console.log('[v0] Event created')
+      }
+      setOpenDialog(false)
+      loadEvents()
+    } catch (error) {
+      console.error('[v0] Error saving event:', error)
+      setError('Erro ao salvar evento')
     }
-    setOpenDialog(false)
   }
 
-  const handleDeleteEvent = (id) => {
-    setEvents(events.filter(e => e.id !== id))
+  const handleDeleteEvent = async (id: string) => {
+    if (!confirm('Tem certeza que deseja eliminar este evento?')) return
+    try {
+      await eventsApi.delete(id)
+      console.log('[v0] Event deleted')
+      loadEvents()
+    } catch (error) {
+      console.error('[v0] Error deleting event:', error)
+    }
   }
 
   return (
     <div className="p-6 space-y-6">
+      {error && (
+        <Alert variant="destructive">
+          <AlertCircle className="h-4 w-4" />
+          <AlertDescription>{error}</AlertDescription>
+        </Alert>
+      )}
+
       <div className="flex justify-between items-start">
         <div>
           <h1 className="text-3xl font-bold">Eventos</h1>
@@ -76,7 +113,6 @@ export default function EventsPage() {
         </Button>
       </div>
 
-      {/* Statistics */}
       <div className="grid grid-cols-1 md:grid-cols-4 gap-4">
         <Card>
           <CardContent className="pt-6">
@@ -116,7 +152,11 @@ export default function EventsPage() {
             <div className="flex items-start justify-between">
               <div>
                 <p className="text-sm text-muted-foreground mb-2">Taxa de Ocupação</p>
-                <p className="text-2xl font-bold">72%</p>
+                <p className="text-2xl font-bold">
+                  {events.length > 0 
+                    ? Math.round((stats.totalAttendees / (events.reduce((sum, e) => sum + (e.capacity || 1), 0))) * 100) 
+                    : 0}%
+                </p>
               </div>
               <MapPin size={24} className="text-primary/50" />
             </div>
@@ -124,7 +164,6 @@ export default function EventsPage() {
         </Card>
       </div>
 
-      {/* Events Table */}
       <Card>
         <CardHeader>
           <CardTitle>Lista de Eventos</CardTitle>
@@ -185,77 +224,84 @@ export default function EventsPage() {
           </div>
 
           <div className="border border-border rounded-lg overflow-hidden">
-            <Table>
-              <TableHeader className="bg-muted">
-                <TableRow>
-                  <TableHead>Nome do Evento</TableHead>
-                  <TableHead>Data e Hora</TableHead>
-                  <TableHead>Local</TableHead>
-                  <TableHead>Categoria</TableHead>
-                  <TableHead>Participantes</TableHead>
-                  <TableHead>Status</TableHead>
-                  <TableHead className="text-right">Ações</TableHead>
-                </TableRow>
-              </TableHeader>
-              <TableBody>
-                {paginatedEvents.length > 0 ? (
-                  paginatedEvents.map((event) => (
-                    <TableRow key={event.id}>
-                      <TableCell className="font-medium">{event.name}</TableCell>
-                      <TableCell className="text-sm">
-                        {event.date} {event.time}
-                      </TableCell>
-                      <TableCell className="text-sm">{event.location}</TableCell>
-                      <TableCell>
-                        <span className="px-3 py-1 bg-primary/10 text-primary rounded-full text-sm">
-                          {event.category}
-                        </span>
-                      </TableCell>
-                      <TableCell className="text-sm">
-                        {event.attendees}/{event.capacity}
-                      </TableCell>
-                      <TableCell>
-                        <span className={`px-3 py-1 rounded-full text-sm ${
-                          event.status === 'Agendado'
-                            ? 'bg-blue-100 text-blue-700'
-                            : event.status === 'Realizado'
-                            ? 'bg-green-100 text-green-700'
-                            : 'bg-red-100 text-red-700'
-                        }`}>
-                          {event.status}
-                        </span>
-                      </TableCell>
-                      <TableCell className="text-right space-x-2">
-                        <Button
-                          variant="ghost"
-                          size="sm"
-                          onClick={() => {
-                            setEditingEvent(event)
-                            setOpenDialog(true)
-                          }}
-                        >
-                          <Edit size={16} />
-                        </Button>
-                        <Button
-                          variant="ghost"
-                          size="sm"
-                          className="text-destructive"
-                          onClick={() => handleDeleteEvent(event.id)}
-                        >
-                          <Trash2 size={16} />
-                        </Button>
+            {loading ? (
+              <div className="text-center py-8 flex items-center justify-center gap-2">
+                <Loader className="animate-spin" size={18} />
+                <span>Carregando eventos...</span>
+              </div>
+            ) : (
+              <Table>
+                <TableHeader className="bg-muted">
+                  <TableRow>
+                    <TableHead>Nome do Evento</TableHead>
+                    <TableHead>Data e Hora</TableHead>
+                    <TableHead>Local</TableHead>
+                    <TableHead>Categoria</TableHead>
+                    <TableHead>Participantes</TableHead>
+                    <TableHead>Status</TableHead>
+                    <TableHead className="text-right">Ações</TableHead>
+                  </TableRow>
+                </TableHeader>
+                <TableBody>
+                  {paginatedEvents.length > 0 ? (
+                    paginatedEvents.map((event) => (
+                      <TableRow key={event.id}>
+                        <TableCell className="font-medium">{event.name}</TableCell>
+                        <TableCell className="text-sm">
+                          {event.date} {event.time || ''}
+                        </TableCell>
+                        <TableCell className="text-sm">{event.location || '-'}</TableCell>
+                        <TableCell>
+                          <span className="px-3 py-1 bg-primary/10 text-primary rounded-full text-sm">
+                            {event.category || '-'}
+                          </span>
+                        </TableCell>
+                        <TableCell className="text-sm">
+                          {event.attendees || 0}/{event.capacity || 0}
+                        </TableCell>
+                        <TableCell>
+                          <span className={`px-3 py-1 rounded-full text-sm ${
+                            event.status === 'Agendado'
+                              ? 'bg-blue-100 text-blue-700'
+                              : event.status === 'Realizado'
+                              ? 'bg-green-100 text-green-700'
+                              : 'bg-red-100 text-red-700'
+                          }`}>
+                            {event.status || '-'}
+                          </span>
+                        </TableCell>
+                        <TableCell className="text-right space-x-2">
+                          <Button
+                            variant="ghost"
+                            size="sm"
+                            onClick={() => {
+                              setEditingEvent(event)
+                              setOpenDialog(true)
+                            }}
+                          >
+                            <Edit size={16} />
+                          </Button>
+                          <Button
+                            variant="ghost"
+                            size="sm"
+                            className="text-destructive"
+                            onClick={() => handleDeleteEvent(event.id)}
+                          >
+                            <Trash2 size={16} />
+                          </Button>
+                        </TableCell>
+                      </TableRow>
+                    ))
+                  ) : (
+                    <TableRow>
+                      <TableCell colSpan={7} className="text-center py-8 text-muted-foreground">
+                        Nenhum evento encontrado
                       </TableCell>
                     </TableRow>
-                  ))
-                ) : (
-                  <TableRow>
-                    <TableCell colSpan={7} className="text-center py-8 text-muted-foreground">
-                      Nenhum evento encontrado
-                    </TableCell>
-                  </TableRow>
-                )}
-              </TableBody>
-            </Table>
+                  )}
+                </TableBody>
+              </Table>
+            )}
           </div>
 
           {totalPages > 1 && (
@@ -296,12 +342,22 @@ export default function EventsPage() {
   )
 }
 
-function EventDialog({ open, onOpenChange, event, onSave }) {
+function EventDialog({ open, onOpenChange, event, onSave }: any) {
   const [formData, setFormData] = useState(event || { name: '', date: '', time: '10:00', location: '', category: 'Social', capacity: 50, status: 'Agendado', attendees: 0 })
+  const [loading, setLoading] = useState(false)
 
-  const handleSave = () => {
-    onSave(formData)
-    setFormData({ name: '', date: '', time: '10:00', location: '', category: 'Social', capacity: 50, status: 'Agendado', attendees: 0 })
+  useEffect(() => {
+    setFormData(event || { name: '', date: '', time: '10:00', location: '', category: 'Social', capacity: 50, status: 'Agendado', attendees: 0 })
+  }, [event, open])
+
+  const handleSave = async () => {
+    setLoading(true)
+    try {
+      await onSave(formData)
+      setFormData({ name: '', date: '', time: '10:00', location: '', category: 'Social', capacity: 50, status: 'Agendado', attendees: 0 })
+    } finally {
+      setLoading(false)
+    }
   }
 
   return (
@@ -400,8 +456,8 @@ function EventDialog({ open, onOpenChange, event, onSave }) {
             <Button variant="outline" onClick={() => onOpenChange(false)}>
               Cancelar
             </Button>
-            <Button className="bg-primary hover:bg-primary/90" onClick={handleSave}>
-              {event ? 'Atualizar' : 'Criar'}
+            <Button className="bg-primary hover:bg-primary/90" onClick={handleSave} disabled={loading}>
+              {loading ? 'Salvando...' : event ? 'Atualizar' : 'Criar'}
             </Button>
           </div>
         </div>

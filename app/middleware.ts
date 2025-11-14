@@ -3,9 +3,11 @@ import { NextRequest, NextResponse } from 'next/server'
 export function middleware(request: NextRequest) {
   const token = request.cookies.get('uright_token')?.value
 
-  // Public routes
-  if (request.nextUrl.pathname.startsWith('/login') || request.nextUrl.pathname.startsWith('/register')) {
-    if (token) {
+  // Public routes - allow landing page and auth routes
+  if (request.nextUrl.pathname === '/' ||
+      request.nextUrl.pathname.startsWith('/login') || 
+      request.nextUrl.pathname.startsWith('/register')) {
+    if (token && (request.nextUrl.pathname.startsWith('/login') || request.nextUrl.pathname.startsWith('/register'))) {
       return NextResponse.redirect(new URL('/dashboard', request.url))
     }
     return NextResponse.next()

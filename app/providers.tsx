@@ -1,104 +1,130 @@
 'use client'
 
-import { createContext, useContext, useState, useEffect } from 'react'
-import {parseCookies as getCookie, setCookie, destroyCookie as deleteCookie } from 'nookies'
+import { createContext, useContext, useState, useEffect, type ReactNode } from 'react'
+import { useRouter } from 'next/navigation'
+import { parseCookies, setCookie, destroyCookie } from 'nookies'
 import { authApi } from '@/lib/api'
-import type { User } from '@/lib/types'
+import type { User, Permission } from '@/lib/types'
 
 interface AuthContextType {
-  token: string | null
   user: User | null
-  login: (email: string, password: string) => Promise<void>
-  register: (email: string, password: string, name: string) => Promise<void>
+  loading: boolean
+  hasPermission: (permission: Permission) => boolean
+  hasAssociation: () => boolean
+  associationId: string | null
+  login: (email: string, password: string) => Promise<{ success: boolean; error?: string }>
+  register: (name: string, email: string, password: string) => Promise<{ success: boolean; error?: string }>
   logout: () => void
-  isLoading: boolean
 }
 
 const AuthContext = createContext<AuthContextType | undefined>(undefined)
 
-export function AuthProvider({ children }: { children: React.ReactNode }) {
-  const [token, setToken] = useState<string | null>(null)
+export function AuthProvider({ children }: { children: ReactNode }) {
   const [user, setUser] = useState<User | null>(null)
-  const [isLoading, setIsLoading] = useState(true)
+  const [loading, setLoading] = useState(true)
+  const router = useRouter()
 
   useEffect(() => {
-    const cookies = getCookie(undefined)
-    const storedToken = cookies['auth_token']
-    const storedUser = cookies['uright_user']
-    if (storedToken && storedUser) {
-      setToken(storedToken)
-      try {
-        setUser(JSON.parse(storedUser))
-      } catch {
-        setUser(null)
-      }
-    }
-    setIsLoading(false)
+    checkAuth()
   }, [])
+
+  const checkAuth = async () => {
+    const cookies = parseCookies()
+    const token = cookies.auth_token
+
+    if (!token) {
+      setLoading(false)
+      return
+    }
+
+    try {
+      const response = await authApi.getCurrentUser()
+      if (response.data) {
+        setUser(response.data)
+      } else {
+        destroyCookie(null, 'auth_token')
+      }
+    } catch (error) {
+      console.error('[v0] Auth check failed:', error)
+      destroyCookie(null, 'auth_token')
+    } finally {
+      setLoading(false)
+    }
+  }
 
   const login = async (email: string, password: string) => {
     try {
       const response = await authApi.login(email, password)
-      const newToken = response.data.token
-      const userData = response.data.user
-      
-      setToken(newToken)
-      setUser(userData)
-      
-      setCookie(undefined, 'auth_token', newToken, {
-        maxAge: 30 * 24 * 60 * 60,
-        path: '/',
-        secure: process.env.NODE_ENV === 'production',
-        sameSite: 'strict',
-      })
-      setCookie(undefined, 'uright_user', JSON.stringify(userData), {
-        maxAge: 30 * 24 * 60 * 60,
-        path: '/',
-        secure: process.env.NODE_ENV === 'production',
-        sameSite: 'strict',
-      })
-    } catch (error) {
-      console.error('[v0] Login error:', error)
-      throw error
+
+      if (response.data?.token && response.data?.user) {
+        setCookie(null, 'auth_token', response.data.token, {
+          maxAge: 30 * 24 * 60 * 60,
+          path: '/',
+          sameSite: 'lax',
+        })
+
+        setUser(response.data.user)
+        const redirectPath = response.data.user.hasCompletedOnboarding ? '/dashboard' : '/onboarding'
+        router.push(redirectPath)
+        return { success: true }
+      }
+
+      return { success: false, error: 'Login failed' }
+    } catch (error: any) {
+      return { success: false, error: error?.response?.data?.message || 'Login failed' }
     }
   }
 
-  const register = async (email: string, password: string, name: string) => {
+  const register = async (name: string, email: string, password: string) => {
     try {
       const response = await authApi.register(name, email, password)
-      const newToken = response.data.token
-      const userData = response.data.user
-      
-      setToken(newToken)
-      setUser(userData)
-      
-      setCookie(undefined, 'auth_token', newToken, {
-        maxAge: 30 * 24 * 60 * 60,
-        path: '/',
-        secure: process.env.NODE_ENV === 'production',
-        sameSite: 'strict',
-      })
-      setCookie(undefined, 'uright_user', JSON.stringify(userData), {
-        maxAge: 30 * 24 * 60 * 60,
-        path: '/',
-        secure: process.env.NODE_ENV === 'production',
-        sameSite: 'strict',
-      })
-    } catch (error) {
-      console.error('[v0] Registration error:', error)
-      throw error
+
+      if (response.data?.token && response.data?.user) {
+        setCookie(null, 'auth_token', response.data.token, {
+          maxAge: 30 * 24 * 60 * 60,
+          path: '/',
+          sameSite: 'lax',
+        })
+
+        setUser(response.data.user)
+        router.push('/onboarding')
+        return { success: true }
+      }
+
+      return { success: false, error: 'Registration failed' }
+    } catch (error: any) {
+      return { success: false, error: error?.response?.data?.message || 'Registration failed' }
     }
   }
 
   const logout = () => {
-    setToken(null)
+    destroyCookie(null, 'auth_token')
     setUser(null)
-    deleteCookie(undefined, 'auth_token', { path: '/' })
-    deleteCookie(undefined, 'uright_user', { path: '/' })
+    router.push('/login')
+  }
+
+  const hasPermission = (permission: Permission): boolean => {
+    if (!user) return false
+    return user.permissions.includes(permission)
+  }
+
+  const hasAssociation = (): boolean => {
+    return user?.associationId !== null && user?.associationId !== undefined
   }
 
   return (
-    <AuthContext.Provider value={{ token, user, login, register, logout, isLoading }}>
+    <AuthContext.Provider
+      value={{
+        user,
+        loading,
+        hasPermission,
+        hasAssociation,
+        associationId: user?.associationId || null,
+        login,
+        register,
+        logout,
+      }}
+    >
       {children}
     </AuthContext.Provider>
   )
@@ -106,6 +132,8 @@ export function AuthProvider({ children }: { children: React.ReactNode }) {
 
 export function useAuth() {
   const context = useContext(AuthContext)
-  if (!context) throw new Error('useAuth must be used within AuthProvider')
+  if (context === undefined) {
+    throw new Error('useAuth must be used within an AuthProvider')
+  }
   return context
 }
