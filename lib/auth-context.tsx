@@ -1,4 +1,3 @@
-```tsx file="lib/auth-context.tsx"
 "use client"
 
 import { createContext, useContext, useState, useEffect, type ReactNode } from "react"
@@ -63,7 +62,7 @@ export function AuthProvider({ children }: { children: ReactNode }) {
       return { success: true }
     }
 
-    return { success: false, error: response.error || "Login failed" }
+    return { success: false, error: response?.data?.error || "Login failed" }
   }
 
   const register = async (name: string, email: string, password: string) => {
@@ -81,7 +80,7 @@ export function AuthProvider({ children }: { children: ReactNode }) {
       return { success: true }
     }
 
-    return { success: false, error: response.error || "Registration failed" }
+    return { success: false, error: response.data?.error || "Registration failed" }
   }
 
   const logout = () => {
