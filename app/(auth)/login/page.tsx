@@ -1,37 +1,37 @@
 'use client'
 
-import { useState, useEffect } from 'react'
-import { useRouter } from 'next/navigation'
-import { useAuth } from '@/app/providers'
+import { useState } from 'react'
+import { useAuth } from '@/lib/auth-context'
 import { Button } from '@/components/ui/button'
 import { Input } from '@/components/ui/input'
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from '@/components/ui/card'
+import { useNotification } from '@/lib/notifications-context'
+import { useRouter } from 'next/navigation'
 
 export default function LoginPage() {
   const [email, setEmail] = useState('')
   const [password, setPassword] = useState('')
-  const [error, setError] = useState('')
   const [isLoading, setIsLoading] = useState(false)
-  const { login, token } = useAuth()
+  const { login } = useAuth()
+  const { showNotification } = useNotification()
   const router = useRouter()
-
-  useEffect(() => {
-    if (token) {
-      router.push('/dashboard')
-    }
-  }, [token, router])
 
   const handleSubmit = async (e: React.FormEvent) => {
     e.preventDefault()
-    setError('')
     setIsLoading(true)
 
     try {
-      await login(email, password)
-      router.push('/dashboard')
+      const result = await login(email, password)
+      
+      if (result.success) {
+        showNotification('Login realizado com sucesso!', 'success')
+      } else {
+        showNotification(result.error || 'Email ou senha inválidos', 'error')
+        setIsLoading(false)
+      }
     } catch (err) {
-      setError('Email ou senha inválidos')
-    } finally {
+      console.error('[v0] Login error:', err)
+      showNotification('Erro ao fazer login', 'error')
       setIsLoading(false)
     }
   }
@@ -74,7 +74,6 @@ export default function LoginPage() {
                 disabled={isLoading}
               />
             </div>
-            {error && <p className="text-sm text-destructive">{error}</p>}
             <Button
               type="submit"
               className="w-full bg-primary hover:bg-primary/90"

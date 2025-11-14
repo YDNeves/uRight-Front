@@ -11,7 +11,7 @@ export default function ProtectedLayout({
 }: {
   children: React.ReactNode
 }) {
-  const { token, isLoading } = useAuth()
+  const { user, loading } = useAuth() // <-- usar user e loading
   const router = useRouter()
   const [mounted, setMounted] = useState(false)
 
@@ -20,12 +20,12 @@ export default function ProtectedLayout({
   }, [])
 
   useEffect(() => {
-    if (mounted && !isLoading && !token) {
-      router.push('/login')
+    if (mounted && !loading && !user) {
+      router.push('/login') // redireciona se não estiver logado
     }
-  }, [token, isLoading, mounted, router])
+  }, [user, loading, mounted, router])
 
-  if (!mounted || isLoading) {
+  if (!mounted || loading) {
     return (
       <div className="flex items-center justify-center min-h-screen">
         <div className="animate-spin rounded-full h-8 w-8 border-b-2 border-primary"></div>
@@ -33,7 +33,7 @@ export default function ProtectedLayout({
     )
   }
 
-  if (!token) {
+  if (!user) {
     return null
   }
 

@@ -1,37 +1,52 @@
 import { NextRequest, NextResponse } from 'next/server'
 
 export function middleware(request: NextRequest) {
-  const token = request.cookies.get('uright_token')?.value
+  const token = request.cookies.get('auth_token')?.value
+  const { pathname } = request.nextUrl
+  console.log(token)
+  // R O T A S   P Ú B L I C A S
+  const publicRoutes = [
+    '/',
+    '/login',
+    '/register',
+    '/forgot-password',
+    '/reset-password',
+  ]
 
-  // Public routes - allow landing page and auth routes
-  if (request.nextUrl.pathname === '/' ||
-      request.nextUrl.pathname.startsWith('/login') || 
-      request.nextUrl.pathname.startsWith('/register')) {
-    if (token && (request.nextUrl.pathname.startsWith('/login') || request.nextUrl.pathname.startsWith('/register'))) {
-      return NextResponse.redirect(new URL('/dashboard', request.url))
-    }
-    return NextResponse.next()
+  const isPublicRoute = publicRoutes.some(route => pathname.startsWith(route))
+
+  // Se tem token e tenta ir para login ou register → manda para dashboard
+  if (token && (pathname.startsWith('/login') || pathname.startsWith('/register'))) {
+    return NextResponse.redirect(new URL('/dashboard', request.url))
   }
 
-  // Protected routes
-  if (request.nextUrl.pathname.startsWith('/dashboard') || 
-      request.nextUrl.pathname.startsWith('/users') ||
-      request.nextUrl.pathname.startsWith('/associations') ||
-      request.nextUrl.pathname.startsWith('/members') ||
-      request.nextUrl.pathname.startsWith('/contributions') ||
-      request.nextUrl.pathname.startsWith('/events') ||
-      request.nextUrl.pathname.startsWith('/finance') ||
-      request.nextUrl.pathname.startsWith('/reports') ||
-      request.nextUrl.pathname.startsWith('/notifications') ||
-      request.nextUrl.pathname.startsWith('/settings')) {
-    if (!token) {
-      return NextResponse.redirect(new URL('/login', request.url))
-    }
+  // R O T A S   P R O T E G I D A S
+  const protectedRoutes = [
+    '/dashboard',
+    '/users',
+    '/associations',
+    '/members',
+    '/contributions',
+    '/events',
+    '/finance',
+    '/reports',
+    '/notifications',
+    '/settings',
+    '/onboarding',
+  ]
+
+  const isProtectedRoute = protectedRoutes.some(route => pathname.startsWith(route))
+
+  // Se a rota é protegida e NÃO tem token → volta para login
+  if (isProtectedRoute && !token) {
+    return NextResponse.redirect(new URL('/login', request.url))
   }
 
   return NextResponse.next()
 }
 
 export const config = {
-  matcher: ['/((?!api|_next/static|_next/image|favicon.ico).*)'],
+  matcher: [
+    '/((?!api|_next/static|_next/image|favicon.ico).*)',
+  ],
 }

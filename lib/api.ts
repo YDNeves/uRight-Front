@@ -1,4 +1,4 @@
-import { parseCookies } from "nookies"
+import { parseCookies,destroyCookie } from "nookies"
 import axios, { AxiosInstance, AxiosError } from "axios"
 
 const API_BASE_URL = process.env.NEXT_PUBLIC_API_URL || "http://localhost:3001/api"
@@ -26,12 +26,27 @@ axiosInstance.interceptors.request.use((config) => {
 axiosInstance.interceptors.response.use(
   (response) => response,
   (error: AxiosError) => {
-    if (error.response?.status === 401) {
-      // Token expired or unauthorized
+    const status = error.response?.status
+
+    // If token is invalid or expired
+    if (status === 401) {
+
+      // Remove token immediately
       if (typeof window !== "undefined") {
-        window.location.href = "/login"
+        destroyCookie(null, "auth_token")
+      }
+
+      // Only redirect on client
+      if (typeof window !== "undefined") {
+        const currentPath = window.location.pathname
+
+        // Prevent redirect loop to /login
+        if (currentPath !== "/login" && currentPath !== "/register") {
+          window.location.href = "/login"
+        }
       }
     }
+
     return Promise.reject(error)
   }
 )
