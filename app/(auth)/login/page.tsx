@@ -1,105 +1,75 @@
-'use client'
+"use client"
 
-import { useState } from 'react'
-import { useAuth } from '@/lib/auth-context'
-import { Button } from '@/components/ui/button'
-import { Input } from '@/components/ui/input'
-import { Card, CardContent, CardDescription, CardHeader, CardTitle } from '@/components/ui/card'
-import { useNotification } from '@/lib/notifications-context'
-import { useRouter } from 'next/navigation'
+import Link from "next/link"
+import Image from "next/image"
+import { Button } from "@/components/ui/button"
+import { Input } from "@/components/ui/input"
+import { Card } from "@/components/ui/card"
+import { useState } from "react"
 
 export default function LoginPage() {
-  const [email, setEmail] = useState('')
-  const [password, setPassword] = useState('')
-  const [isLoading, setIsLoading] = useState(false)
-  const { login } = useAuth()
-  const { showNotification } = useNotification()
-  const router = useRouter()
-
-  const handleSubmit = async (e: React.FormEvent) => {
-    e.preventDefault()
-    setIsLoading(true)
-
-    try {
-      const result = await login(email, password)
-      
-      if (result.success) {
-        showNotification('Login realizado com sucesso!', 'success')
-      } else {
-        showNotification(result.error || 'Email ou senha inválidos', 'error')
-        setIsLoading(false)
-      }
-    } catch (err) {
-      console.error('[v0] Login error:', err)
-      showNotification('Erro ao fazer login', 'error')
-      setIsLoading(false)
-    }
-  }
+  const [email, setEmail] = useState("")
+  const [password, setPassword] = useState("")
 
   return (
-    <div className="w-full max-w-md">
-      <Card className="border-0 shadow-lg">
-        <CardHeader className="space-y-2 text-center pb-8">
-          <div className="flex justify-center mb-4">
-            <div className="w-16 h-16 bg-gradient-to-br from-primary to-secondary rounded-lg flex items-center justify-center">
-              <span className="text-white font-bold text-2xl">U</span>
-            </div>
-          </div>
-          <CardTitle className="text-2xl">URight</CardTitle>
-          <CardDescription>Gestão de Associações</CardDescription>
-        </CardHeader>
-        <CardContent>
-          <form onSubmit={handleSubmit} className="space-y-4">
-            <div className="space-y-2">
-              <label htmlFor="email" className="text-sm font-medium">Email</label>
-              <Input
-                id="email"
-                type="email"
-                placeholder="seu@email.com"
-                value={email}
-                onChange={(e) => setEmail(e.target.value)}
-                required
-                disabled={isLoading}
+    <div className="min-h-screen bg-gradient-to-br from-blue-50 to-cyan-50 flex items-center justify-center px-4 py-12">
+      {/* Background shapes */}
+      <div className="absolute inset-0 -z-10">
+        <div className="absolute top-20 left-10 w-72 h-72 bg-primary/10 organic-blob animate-blob"></div>
+        <div className="absolute bottom-20 right-10 w-72 h-72 bg-accent/10 organic-blob animate-blob animation-delay-2000"></div>
+      </div>
+
+      <Card className="w-full max-w-md p-8 shadow-lg border-border/50">
+        <div className="text-center mb-8">
+          <Link href="/" className="inline-flex items-center justify-center gap-2 mb-4">
+            <div className="w-12 h-12 relative">
+              <Image
+                src="/logo.png"
+                alt="uRight Logo"
+                width={48}
+                height={48}
+                className="w-full h-full object-contain"
               />
             </div>
-            <div className="space-y-2">
-              <label htmlFor="password" className="text-sm font-medium">Senha</label>
-              <Input
-                id="password"
-                type="password"
-                placeholder="••••••••"
-                value={password}
-                onChange={(e) => setPassword(e.target.value)}
-                required
-                disabled={isLoading}
-              />
-            </div>
-            <Button
-              type="submit"
-              className="w-full bg-primary hover:bg-primary/90"
-              disabled={isLoading}
-            >
-              {isLoading ? 'Entrando...' : 'Entrar'}
-            </Button>
-            <div className="relative">
-              <div className="absolute inset-0 flex items-center">
-                <span className="w-full border-t border-border"></span>
-              </div>
-              <div className="relative flex justify-center text-xs uppercase">
-                <span className="bg-card px-2 text-muted-foreground">Novo por aqui?</span>
-              </div>
-            </div>
-            <Button
-              type="button"
-              variant="outline"
+          </Link>
+          <h1 className="text-3xl font-bold text-foreground">Bem-vindo</h1>
+          <p className="text-foreground/60 mt-2">Entre para gerenciar sua associação</p>
+        </div>
+
+        <form className="space-y-4">
+          <div>
+            <label className="block text-sm font-medium text-foreground mb-2">Email</label>
+            <Input
+              type="email"
+              placeholder="seu@email.com"
+              value={email}
+              onChange={(e) => setEmail(e.target.value)}
               className="w-full"
-              onClick={() => router.push('/register')}
-              disabled={isLoading}
-            >
-              Criar Conta
-            </Button>
-          </form>
-        </CardContent>
+            />
+          </div>
+
+          <div>
+            <label className="block text-sm font-medium text-foreground mb-2">Senha</label>
+            <Input
+              type="password"
+              placeholder="••••••••"
+              value={password}
+              onChange={(e) => setPassword(e.target.value)}
+              className="w-full"
+            />
+          </div>
+
+          <Link href="/dashboard" className="w-full">
+            <Button className="w-full bg-secondary hover:bg-secondary/90">Entrar</Button>
+          </Link>
+        </form>
+
+        <p className="text-center text-sm text-foreground/60 mt-6">
+          Não tem conta?{" "}
+          <Link href="/register" className="text-primary font-semibold hover:underline">
+            Criar conta
+          </Link>
+        </p>
       </Card>
     </div>
   )
