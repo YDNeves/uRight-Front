@@ -15,35 +15,35 @@ const plans = [
   {
     name: "Profissional",
     description: "Para crescimento",
-    price: "49€",
+    price: "KZ 8.500",
     period: "/mês",
-    features: ["Até 500 membros", "Análise completa", "Suporte prioritário", "Relatórios avançados"],
+    features: ["Até 500 membros", "Análise avançada", "Suporte prioritário", "Relatórios customizados"],
     highlighted: true,
   },
   {
     name: "Empresarial",
     description: "Solução completa",
     price: "Sob consulta",
-    features: ["Membros ilimitados", "API customizada", "Dedicado 24/7", "Integrações"],
+    features: ["Membros ilimitados", "API customizada", "Suporte dedicado", "Integrações"],
   },
 ]
 
 export function ProgramsSection() {
   return (
-    <section id="programs" className="py-20 md:py-32 px-4 sm:px-6 lg:px-8 bg-background">
+    <section id="pricing" className="py-20 md:py-32 px-4 sm:px-6 lg:px-8 bg-background">
       <div className="max-w-6xl mx-auto">
         <div className="text-center mb-16">
-          <h2 className="text-4xl md:text-5xl font-bold text-foreground mb-4">Escolha Seu Plano</h2>
-          <p className="text-lg text-foreground/60">Comece grátis e atualize conforme crescer</p>
+          <h2 className="text-4xl md:text-5xl font-bold text-foreground mb-4">Planos Disponíveis</h2>
+          <p className="text-lg text-foreground/60">Comece grátis e suba de plano conforme sua associação crescer</p>
         </div>
 
         <div className="grid md:grid-cols-3 gap-8">
           {plans.map((plan, idx) => (
             <Card
               key={idx}
-              className={`p-8 flex flex-col smooth-transition ${
+              className={`p-8 flex flex-col transition-shadow ${
                 plan.highlighted
-                  ? "border-2 border-primary shadow-xl scale-105 md:scale-100"
+                  ? "border-2 border-primary shadow-xl md:scale-105"
                   : "border-border hover:border-primary/30"
               }`}
             >
@@ -68,7 +68,7 @@ export function ProgramsSection() {
                   </li>
                 ))}
               </ul>
-              <Link href="/register" className="w-full">
+              <Link href="/auth/register" className="w-full">
                 <Button className="w-full" variant={plan.highlighted ? "default" : "outline"}>
                   Começar
                 </Button>

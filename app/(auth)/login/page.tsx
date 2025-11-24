@@ -13,7 +13,6 @@ export default function LoginPage() {
 
   return (
     <div className="min-h-screen bg-gradient-to-br from-blue-50 to-cyan-50 flex items-center justify-center px-4 py-12">
-      {/* Background shapes */}
       <div className="absolute inset-0 -z-10">
         <div className="absolute top-20 left-10 w-72 h-72 bg-primary/10 organic-blob animate-blob"></div>
         <div className="absolute bottom-20 right-10 w-72 h-72 bg-accent/10 organic-blob animate-blob animation-delay-2000"></div>
@@ -23,17 +22,11 @@ export default function LoginPage() {
         <div className="text-center mb-8">
           <Link href="/" className="inline-flex items-center justify-center gap-2 mb-4">
             <div className="w-12 h-12 relative">
-              <Image
-                src="/logo.png"
-                alt="uRight Logo"
-                width={48}
-                height={48}
-                className="w-full h-full object-contain"
-              />
+              <Image src="/logo.png" alt="uRight" width={48} height={48} className="w-full h-full object-contain" />
             </div>
           </Link>
-          <h1 className="text-3xl font-bold text-foreground">Bem-vindo</h1>
-          <p className="text-foreground/60 mt-2">Entre para gerenciar sua associação</p>
+          <h1 className="text-3xl font-bold text-foreground">Autenticação</h1>
+          <p className="text-foreground/60 mt-2">Entre na sua conta para prosseguir</p>
         </div>
 
         <form className="space-y-4">
@@ -49,7 +42,7 @@ export default function LoginPage() {
           </div>
 
           <div>
-            <label className="block text-sm font-medium text-foreground mb-2">Senha</label>
+            <label className="block text-sm font-medium text-foreground mb-2">Palavra-passe</label>
             <Input
               type="password"
               placeholder="••••••••"
@@ -66,8 +59,8 @@ export default function LoginPage() {
 
         <p className="text-center text-sm text-foreground/60 mt-6">
           Não tem conta?{" "}
-          <Link href="/register" className="text-primary font-semibold hover:underline">
-            Criar conta
+          <Link href="/auth/register" className="text-primary font-semibold hover:underline">
+            Registar-se
           </Link>
         </p>
       </Card>

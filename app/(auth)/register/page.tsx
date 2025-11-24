@@ -1,7 +1,6 @@
 "use client"
 
 import type React from "react"
-
 import Link from "next/link"
 import Image from "next/image"
 import { Button } from "@/components/ui/button"
@@ -11,7 +10,7 @@ import { useState } from "react"
 
 export default function RegisterPage() {
   const [formData, setFormData] = useState({
-    name: "",
+    fullName: "",
     email: "",
     password: "",
     associationName: "",
@@ -35,17 +34,11 @@ export default function RegisterPage() {
         <div className="text-center mb-8">
           <Link href="/" className="inline-flex items-center justify-center gap-2 mb-4">
             <div className="w-12 h-12 relative">
-              <Image
-                src="/logo.png"
-                alt="uRight Logo"
-                width={48}
-                height={48}
-                className="w-full h-full object-contain"
-              />
+              <Image src="/logo.png" alt="uRight" width={48} height={48} className="w-full h-full object-contain" />
             </div>
           </Link>
           <h1 className="text-3xl font-bold text-foreground">Criar Conta</h1>
-          <p className="text-foreground/60 mt-2">Comece seu jornada com uRight</p>
+          <p className="text-foreground/60 mt-2">Registe sua associação para começar</p>
         </div>
 
         <form className="space-y-4">
@@ -53,20 +46,20 @@ export default function RegisterPage() {
             <label className="block text-sm font-medium text-foreground mb-2">Nome Completo</label>
             <Input
               type="text"
-              name="name"
-              placeholder="João Silva"
-              value={formData.name}
+              name="fullName"
+              placeholder="João da Silva"
+              value={formData.fullName}
               onChange={handleChange}
               className="w-full"
             />
           </div>
 
           <div>
-            <label className="block text-sm font-medium text-foreground mb-2">Associação</label>
+            <label className="block text-sm font-medium text-foreground mb-2">Nome da Associação</label>
             <Input
               type="text"
               name="associationName"
-              placeholder="Nome da Associação"
+              placeholder="Associação Comunitária..."
               value={formData.associationName}
               onChange={handleChange}
               className="w-full"
@@ -86,7 +79,7 @@ export default function RegisterPage() {
           </div>
 
           <div>
-            <label className="block text-sm font-medium text-foreground mb-2">Senha</label>
+            <label className="block text-sm font-medium text-foreground mb-2">Palavra-passe</label>
             <Input
               type="password"
               name="password"
@@ -98,14 +91,14 @@ export default function RegisterPage() {
           </div>
 
           <Link href="/dashboard" className="w-full">
-            <Button className="w-full bg-primary hover:bg-primary/90">Criar Conta</Button>
+            <Button className="w-full bg-secondary hover:bg-secondary/90">Registar-se</Button>
           </Link>
         </form>
 
         <p className="text-center text-sm text-foreground/60 mt-6">
           Já tem conta?{" "}
-          <Link href="/login" className="text-primary font-semibold hover:underline">
-            Entrar
+          <Link href="/auth/login" className="text-primary font-semibold hover:underline">
+            Entrar agora
           </Link>
         </p>
       </Card>

@@ -8,8 +8,8 @@ const _geist = Geist({ subsets: ["latin"] })
 const _geistMono = Geist_Mono({ subsets: ["latin"] })
 
 export const metadata: Metadata = {
-  title: "uRight - Sonhos e Realizações",
-  description: "Plataforma de gestão de associações. Transforme seus sonhos em realizações.",
+  title: "uRight - Plataforma de Gestão de Associações",
+  description: "Plataforma integrada para gestão de associações. Controle membros, finanças e eventos com eficiência.",
   icons: {
     icon: "/logo.png",
     apple: "/logo.png",
@@ -23,7 +23,7 @@ export default function RootLayout({
   children: React.ReactNode
 }>) {
   return (
-    <html lang="pt-PT" suppressHydrationWarning>
+    <html lang="pt-AO" suppressHydrationWarning>
       <body className={`font-sans antialiased`}>
         {children}
         <Analytics />

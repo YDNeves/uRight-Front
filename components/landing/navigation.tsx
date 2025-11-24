@@ -3,52 +3,47 @@
 import Link from "next/link"
 import Image from "next/image"
 import { Button } from "@/components/ui/button"
+import { NAVIGATION_LINKS } from "@/lib/constants"
 
 export function Navigation() {
   return (
     <nav className="sticky top-0 z-50 bg-white/95 backdrop-blur-md border-b border-border">
       <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8">
         <div className="flex items-center justify-between h-16">
-          {/* Logo */}
-          <Link href="/" className="flex items-center gap-2 flex-shrink-0">
-            <div className="w-10 h-10 relative">
-              <Image
-                src="/logo.png"
-                alt="uRight Logo"
-                width={40}
-                height={40}
-                className="w-full h-full object-contain"
-              />
-            </div>
-            <span className="hidden sm:inline text-xl font-bold text-secondary">uRight</span>
-          </Link>
+        <Link href="/" className="flex items-center gap-2 flex-shrink-0">
+  {/* O contêiner PAI define o tamanho real desejado e a posição relativa */}
+      <div className="w-25 h-10 relative"> 
+        <Image 
+          src="/logo.png" 
+          alt="uRight" 
+          fill // Faz a imagem preencher o div 10x10
+          className="object-contain" // Garante que o logo caiba sem cortar, mantendo proporção
+          sizes="(max-width: 100px) 10vw, 5vw" // Adicione 'sizes' para otimização do Next.js
+        />
+      </div>
+</Link>
 
-          {/* Desktop Menu */}
           <div className="hidden md:flex items-center gap-8">
-            <a href="#features" className="text-sm text-foreground/70 hover:text-foreground smooth-transition">
-              Funcionalidades
-            </a>
-            <a href="#why" className="text-sm text-foreground/70 hover:text-foreground smooth-transition">
-              Por Que Escolher
-            </a>
-            <a href="#programs" className="text-sm text-foreground/70 hover:text-foreground smooth-transition">
-              Planos
-            </a>
-            <a href="#testimonials" className="text-sm text-foreground/70 hover:text-foreground smooth-transition">
-              Depoimentos
-            </a>
+            {NAVIGATION_LINKS.map((link) => (
+              <a
+                key={link.href}
+                href={link.href}
+                className="text-sm text-foreground/70 hover:text-foreground transition-colors"
+              >
+                {link.label}
+              </a>
+            ))}
           </div>
 
-          {/* CTA Buttons */}
           <div className="flex items-center gap-3">
-            <Link href="/login">
+            <Link href="/auth/login">
               <Button variant="ghost" size="sm">
                 Entrar
               </Button>
             </Link>
-            <Link href="/register">
+            <Link href="/auth/register">
               <Button size="sm" className="bg-primary hover:bg-primary/90">
-                Começar
+                Registar
               </Button>
             </Link>
           </div>

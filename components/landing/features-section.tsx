@@ -7,22 +7,23 @@ const features = [
   {
     icon: Users,
     title: "Gestão de Membros",
-    description: "Controle permissões, acessos e informações de todos os membros da sua associação",
+    description:
+      "Sistema centralizado para controle de informações, permissões e acessos de membros com interface intuitiva.",
   },
   {
     icon: BarChart3,
     title: "Análise Financeira",
-    description: "Monitore receitas, despesas e gere relatórios detalhados de forma automática",
+    description: "Relatórios detalhados de receitas, despesas e fluxo de caixa com geração automática de documentos.",
   },
   {
     icon: Calendar,
-    title: "Eventos & Calendário",
-    description: "Organize eventos, envie convites e gerencie RSVPs com facilidade",
+    title: "Calendário e Eventos",
+    description: "Agenda integrada para coordenação de eventos, confirmações e notificações automáticas a membros.",
   },
   {
     icon: MessageSquare,
     title: "Comunicações",
-    description: "Envie mensagens em massa, notificações e mantenha todos informados",
+    description: "Envio em massa de notificações, mensagens e relatórios para manter todos informados em tempo real.",
   },
 ]
 
@@ -33,9 +34,9 @@ export function FeaturesSection() {
 
       <div className="max-w-6xl mx-auto">
         <div className="text-center mb-16">
-          <h2 className="text-4xl md:text-5xl font-bold text-foreground mb-4">Nossas Funcionalidades</h2>
+          <h2 className="text-4xl md:text-5xl font-bold text-foreground mb-4">Funcionalidades Principais</h2>
           <p className="text-lg text-foreground/60 max-w-2xl mx-auto">
-            Tudo que você precisa para gerenciar sua associação em um só lugar
+            Ferramentas essenciais para gerir sua associação de forma eficiente
           </p>
         </div>
 
@@ -43,7 +44,7 @@ export function FeaturesSection() {
           {features.map((feature, idx) => {
             const Icon = feature.icon
             return (
-              <Card key={idx} className="p-8 hover:shadow-lg smooth-transition border-border hover:border-primary/30">
+              <Card key={idx} className="p-8 hover:shadow-lg transition-shadow border-border hover:border-primary/30">
                 <div className="w-12 h-12 bg-primary/10 rounded-xl flex items-center justify-center mb-4">
                   <Icon className="w-6 h-6 text-primary" />
                 </div>

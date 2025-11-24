@@ -6,12 +6,20 @@ import Image from "next/image"
 import { Button } from "@/components/ui/button"
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card"
 import { Users, BarChart3, Calendar, TrendingUp, LogOut, Menu, X } from "lucide-react"
+import { DASHBOARD_MENU, CURRENCY } from "@/lib/constants"
 
 const stats = [
-  { title: "Membros Ativos", value: "1,245", change: "+12%", icon: Users },
-  { title: "Receita Mês", value: "€8,540", change: "+8%", icon: BarChart3 },
+  { title: "Membros Ativos", value: "1.245", change: "+12%", icon: Users },
+  { title: `Receita Mês`, value: `${CURRENCY.symbol} 125.800`, change: "+8%", icon: BarChart3 },
   { title: "Eventos", value: "8", change: "+2", icon: Calendar },
   { title: "Crescimento", value: "24%", change: "Este mês", icon: TrendingUp },
+]
+
+const recentActivities = [
+  { label: "Novo membro registado", time: "2 horas atrás" },
+  { label: "Assembleia Geral agendada", time: "5 horas atrás" },
+  { label: "Pagamento recebido KZ 45.000", time: "1 dia atrás" },
+  { label: "Relatório mensal gerado", time: "2 dias atrás" },
 ]
 
 export default function DashboardPage() {
@@ -19,33 +27,26 @@ export default function DashboardPage() {
 
   return (
     <div className="min-h-screen bg-background">
-      {/* Topbar */}
       <header className="sticky top-0 z-40 bg-white border-b border-border">
         <div className="px-4 sm:px-6 lg:px-8 py-4 flex items-center justify-between">
           <div className="flex items-center gap-3">
             <button
               onClick={() => setSidebarOpen(!sidebarOpen)}
-              className="lg:hidden p-2 hover:bg-muted rounded-lg smooth-transition"
+              className="lg:hidden p-2 hover:bg-muted rounded-lg transition-colors"
             >
               {sidebarOpen ? <X className="w-5 h-5" /> : <Menu className="w-5 h-5" />}
             </button>
             <Link href="/" className="flex items-center gap-2">
               <div className="w-8 h-8 relative">
-                <Image
-                  src="/logo.png"
-                  alt="uRight Logo"
-                  width={32}
-                  height={32}
-                  className="w-full h-full object-contain"
-                />
+                <Image src="/logo.png" alt="uRight" width={32} height={32} className="w-full h-full object-contain" />
               </div>
               <span className="hidden sm:inline font-bold text-secondary">uRight</span>
             </Link>
           </div>
 
           <div className="flex items-center gap-4">
-            <div className="w-10 h-10 rounded-full bg-primary flex items-center justify-center text-primary-foreground font-bold">
-              JS
+            <div className="w-10 h-10 rounded-full bg-primary flex items-center justify-center text-primary-foreground font-bold text-sm">
+              JC
             </div>
             <Link href="/">
               <Button variant="ghost" size="sm">
@@ -58,7 +59,6 @@ export default function DashboardPage() {
       </header>
 
       <div className="flex">
-        {/* Sidebar */}
         <aside
           className={`${
             sidebarOpen ? "translate-x-0" : "-translate-x-full"
@@ -66,18 +66,11 @@ export default function DashboardPage() {
         >
           <div className="p-6 space-y-8">
             <nav className="space-y-2">
-              {[
-                { label: "Dashboard", icon: "📊", href: "/dashboard" },
-                { label: "Membros", icon: "👥", href: "#" },
-                { label: "Eventos", icon: "📅", href: "#" },
-                { label: "Finanças", icon: "💰", href: "#" },
-                { label: "Relatórios", icon: "📈", href: "#" },
-                { label: "Configurações", icon: "⚙️", href: "#" },
-              ].map((item) => (
-                <Link key={item.label} href={item.href}>
-                  <button className="w-full text-left px-4 py-2 rounded-lg hover:bg-primary/10 text-foreground/70 hover:text-primary smooth-transition flex items-center gap-3">
-                    <span className="text-xl">{item.icon}</span>
-                    {item.label}
+              {DASHBOARD_MENU.map((item) => (
+                <Link key={item.href} href={item.href}>
+                  <button className="w-full text-left px-4 py-2 rounded-lg hover:bg-primary/10 text-foreground/70 hover:text-primary transition-colors flex items-center gap-3">
+                    <span className="text-lg">{item.icon}</span>
+                    <span className="text-sm">{item.label}</span>
                   </button>
                 </Link>
               ))}
@@ -85,21 +78,18 @@ export default function DashboardPage() {
           </div>
         </aside>
 
-        {/* Main Content */}
         <main className="flex-1 lg:ml-64 p-4 sm:p-6 lg:p-8">
           <div className="space-y-8">
-            {/* Header */}
             <div>
-              <h1 className="text-4xl font-bold text-foreground">Bem-vindo, João! 👋</h1>
-              <p className="text-foreground/60 mt-2">Aqui está um resumo da sua associação</p>
+              <h1 className="text-4xl font-bold text-foreground">Painel de Controlo</h1>
+              <p className="text-foreground/60 mt-2">Resumo geral da sua associação</p>
             </div>
 
-            {/* Stats Grid */}
             <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-6">
               {stats.map((stat, idx) => {
                 const Icon = stat.icon
                 return (
-                  <Card key={idx} className="border-border hover:shadow-lg smooth-transition">
+                  <Card key={idx} className="border-border hover:shadow-lg transition-shadow">
                     <CardHeader className="flex flex-row items-center justify-between space-y-0 pb-2">
                       <CardTitle className="text-sm font-medium text-foreground/60">{stat.title}</CardTitle>
                       <Icon className="w-4 h-4 text-primary" />
@@ -113,9 +103,7 @@ export default function DashboardPage() {
               })}
             </div>
 
-            {/* Charts Row */}
             <div className="grid lg:grid-cols-2 gap-6">
-              {/* Revenue Chart */}
               <Card className="border-border">
                 <CardHeader>
                   <CardTitle>Receita Este Mês</CardTitle>
@@ -142,22 +130,20 @@ export default function DashboardPage() {
                 </CardContent>
               </Card>
 
-              {/* Activity */}
               <Card className="border-border">
                 <CardHeader>
                   <CardTitle>Atividades Recentes</CardTitle>
                 </CardHeader>
                 <CardContent>
                   <div className="space-y-4">
-                    {[
-                      { label: "Novo membro registado", time: "2h atrás" },
-                      { label: "Evento criado: Assembleia Geral", time: "5h atrás" },
-                      { label: "Pagamento recebido €500", time: "1 dia atrás" },
-                    ].map((activity, idx) => (
-                      <div key={idx} className="flex items-start gap-3 pb-4 border-b border-border last:border-0">
-                        <div className="w-2 h-2 bg-primary rounded-full mt-2"></div>
+                    {recentActivities.map((activity, idx) => (
+                      <div
+                        key={idx}
+                        className="flex items-start gap-3 pb-4 border-b border-border last:border-0 last:pb-0"
+                      >
+                        <div className="w-2 h-2 bg-primary rounded-full mt-2 flex-shrink-0"></div>
                         <div>
-                          <p className="text-foreground font-medium">{activity.label}</p>
+                          <p className="text-foreground font-medium text-sm">{activity.label}</p>
                           <p className="text-xs text-foreground/60">{activity.time}</p>
                         </div>
                       </div>
@@ -167,7 +153,6 @@ export default function DashboardPage() {
               </Card>
             </div>
 
-            {/* Quick Actions */}
             <Card className="border-primary/20 bg-gradient-to-r from-primary/5 to-accent/5">
               <CardHeader>
                 <CardTitle>Ações Rápidas</CardTitle>
@@ -176,7 +161,7 @@ export default function DashboardPage() {
                 <div className="grid grid-cols-2 sm:grid-cols-4 gap-4">
                   <Button className="bg-secondary hover:bg-secondary/90">Novo Membro</Button>
                   <Button variant="outline">Criar Evento</Button>
-                  <Button variant="outline">Nova Contribuição</Button>
+                  <Button variant="outline">Nova Receita</Button>
                   <Button variant="outline">Gerar Relatório</Button>
                 </div>
               </CardContent>
@@ -185,7 +170,6 @@ export default function DashboardPage() {
         </main>
       </div>
 
-      {/* Mobile overlay */}
       {sidebarOpen && (
         <div className="fixed inset-0 bg-black/50 lg:hidden z-20" onClick={() => setSidebarOpen(false)}></div>
       )}
