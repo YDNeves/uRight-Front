@@ -36,12 +36,12 @@ export function Navigation() {
           </div>
 
           <div className="flex items-center gap-3">
-            <Link href="/auth/login">
+            <Link href="/login">
               <Button variant="ghost" size="sm">
                 Entrar
               </Button>
             </Link>
-            <Link href="/auth/register">
+            <Link href="/register">
               <Button size="sm" className="bg-primary hover:bg-primary/90">
                 Registar
               </Button>
