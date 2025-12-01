@@ -21,7 +21,7 @@ export default function HomePage() {
    useEffect(() => {
     if (!loading) {
       if (user) {
-        router.push("/onboarding")
+        router.push("/dashboard")
       } else {
         router.push("/")
       }

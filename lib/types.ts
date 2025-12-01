@@ -2,10 +2,11 @@ export interface User {
   id: string
   email: string
   name: string
-  role: "superadmin" | "admin" | "gestor" | "membro"
+  role: "superadmin" | "admin" | "treasurer" | "member"
   associationId: string | null
   permissions: Permission[]
   hasCompletedOnboarding: boolean
+  //hasApprovedAccess:boolean
   createdAt: string
 }
 

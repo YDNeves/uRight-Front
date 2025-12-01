@@ -1,3 +1,4 @@
+"use client"
 import DashboardLayout from "@/components/dashboard/dashboard-layout"
 import { Card, CardHeader, CardTitle, CardContent } from "@/components/ui/card"
 import { Users, UserCheck, DollarSign, Clock, Calendar, TrendingUp, TrendingDown } from "lucide-react"
