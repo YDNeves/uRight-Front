@@ -6,6 +6,7 @@ export interface User {
   associationId: string | null
   permissions: Permission[]
   hasCompletedOnboarding: boolean
+  imageUrl?: string
   //hasApprovedAccess:boolean
   createdAt: string
 }
