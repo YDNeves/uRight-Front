@@ -75,7 +75,7 @@ export default function OnboardingPage() {
     <div className="min-h-screen bg-gradient-to-br from-background via-background to-secondary/10 p-4">
       <div className="mx-auto max-w-4xl">
         <div className="mb-12 text-center">
-          <h1 className="mb-2 text-4xl font-bold text-foreground">Bem-vindo ao AssoGest</h1>
+          <h1 className="mb-2 text-4xl font-bold text-foreground">Bem-vindo ao uRight</h1>
           <p className="text-lg text-muted-foreground">Vamos configurar sua associação em 3 passos rápidos</p>
         </div>
 

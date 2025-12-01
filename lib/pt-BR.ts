@@ -2,7 +2,7 @@ export const translations = {
   // Autenticação
   auth: {
     welcomeBack: "Bem-vindo de volta",
-    signIn: "Iniciar sessão na sua conta AssoGest",
+    signIn: "Iniciar sessão na sua conta uRight",
     email: "Email",
     password: "Palavra-passe",
     signingIn: "Iniciando sessão...",
@@ -12,7 +12,7 @@ export const translations = {
     loginFailed: "Falha ao iniciar sessão",
 
     createAccount: "Criar conta",
-    getStarted: "Comece a usar o AssoGest hoje",
+    getStarted: "Comece a usar o uRight hoje",
     fullName: "Nome completo",
     creatingAccount: "Criando conta...",
     createAccountButton: "Criar conta",
@@ -360,7 +360,7 @@ export const translations = {
 
   // Onboarding
   onboarding: {
-    title: "Bem-vindo ao AssoGest",
+    title: "Bem-vindo ao uRight",
     subtitle: "Vamos configurar a sua conta em 3 passos simples",
     step1: "Criar Associação",
     step2: "Convidar Membros",
@@ -377,7 +377,7 @@ export const translations = {
     next: "Próximo",
     finish: "Concluir",
     completing: "Completando...",
-    completed: "Configuração completa! Bem-vindo ao AssoGest.",
+    completed: "Configuração completa! Bem-vindo ao uRight.",
     errorCreatingAssociation: "Erro ao criar associação",
     errorAddingMember: "Erro ao adicionar membro",
   },

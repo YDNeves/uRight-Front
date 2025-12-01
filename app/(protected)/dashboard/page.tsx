@@ -1,16 +1,16 @@
-"use client"
-
-import { useEffect, useState } from "react"
-import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card"
-import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs"
+import DashboardLayout from "@/components/dashboard/dashboard-layout"
+import { Card, CardHeader, CardTitle, CardContent } from "@/components/ui/card"
 import { Users, UserCheck, DollarSign, Clock, Calendar, TrendingUp, TrendingDown } from "lucide-react"
+import { useEffect, useState } from "react"
 import { dashboardApi } from "@/lib/api"
 import type { DashboardStats } from "@/lib/types"
 import { RevenueChart } from "@/components/dashboard/revenue-chart"
 import { MemberActivityChart } from "@/components/dashboard/member-activity-chart"
 import { RecentActivity } from "@/components/dashboard/recent-activity"
 import { UpcomingEvents } from "@/components/dashboard/upcoming-events"
+import { Tabs, TabsList, TabsTrigger, TabsContent } from "@/components/ui/tabs"
 import { translations } from "@/lib/pt-BR"
+
 const t = translations.dashboard
 const tCommon = translations.common
 
@@ -21,9 +21,7 @@ export default function DashboardPage() {
   useEffect(() => {
     async function fetchStats() {
       const response = await dashboardApi.getStats()
-      if (response.data) {
-        setStats(response.data)
-      }
+      if (response.data) setStats(response.data)
       setLoading(false)
     }
     fetchStats()
@@ -31,9 +29,11 @@ export default function DashboardPage() {
 
   if (loading) {
     return (
-      <div className="flex h-full items-center justify-center">
-        <div className="text-muted-foreground">{t.loading}</div>
-      </div>
+      <DashboardLayout>
+        <div className="flex h-full items-center justify-center">
+          <div className="text-muted-foreground">{t.loading}</div>
+        </div>
+      </DashboardLayout>
     )
   }
 
@@ -86,57 +86,59 @@ export default function DashboardPage() {
   ]
 
   return (
-    <div className="flex flex-col gap-6 p-6">
-      <div>
-        <h1 className="text-3xl font-bold">{t.title}</h1>
-        <p className="text-muted-foreground">{t.welcome}</p>
-      </div>
+    <DashboardLayout>
+      <div className="flex flex-col gap-6 p-6">
+        <div>
+          <h1 className="text-3xl font-bold">{t.title}</h1>
+          <p className="text-muted-foreground">{t.welcome}</p>
+        </div>
 
-      {/* Stats Cards */}
-      <div className="grid gap-4 md:grid-cols-2 lg:grid-cols-5">
-        {statCards.map((stat) => (
-          <Card key={stat.title}>
-            <CardHeader className="flex flex-row items-center justify-between space-y-0 pb-2">
-              <CardTitle className="text-sm font-medium">{stat.title}</CardTitle>
-              <stat.icon className="h-4 w-4 text-muted-foreground" />
-            </CardHeader>
-            <CardContent>
-              <div className="text-2xl font-bold">{stat.value}</div>
-              <p className="text-xs text-muted-foreground">{stat.description}</p>
-              <div className="mt-2 flex items-center gap-1 text-xs">
-                {stat.trendUp ? (
-                  <TrendingUp className="h-3 w-3 text-green-500" />
-                ) : (
-                  <TrendingDown className="h-3 w-3 text-red-500" />
-                )}
-                <span className={stat.trendUp ? "text-green-500" : "text-red-500"}>
-                  {stat.trend} {stat.trendLabel}
-                </span>
-              </div>
-            </CardContent>
-          </Card>
-        ))}
-      </div>
+        {/* Stats Cards */}
+        <div className="grid gap-4 md:grid-cols-2 lg:grid-cols-5">
+          {statCards.map((stat) => (
+            <Card key={stat.title}>
+              <CardHeader className="flex flex-row items-center justify-between space-y-0 pb-2">
+                <CardTitle className="text-sm font-medium">{stat.title}</CardTitle>
+                <stat.icon className="h-4 w-4 text-muted-foreground" />
+              </CardHeader>
+              <CardContent>
+                <div className="text-2xl font-bold">{stat.value}</div>
+                <p className="text-xs text-muted-foreground">{stat.description}</p>
+                <div className="mt-2 flex items-center gap-1 text-xs">
+                  {stat.trendUp ? (
+                    <TrendingUp className="h-3 w-3 text-green-500" />
+                  ) : (
+                    <TrendingDown className="h-3 w-3 text-red-500" />
+                  )}
+                  <span className={stat.trendUp ? "text-green-500" : "text-red-500"}>
+                    {stat.trend} {stat.trendLabel}
+                  </span>
+                </div>
+              </CardContent>
+            </Card>
+          ))}
+        </div>
 
-      {/* Charts Section */}
-      <Tabs defaultValue="revenue" className="space-y-4">
-        <TabsList>
-          <TabsTrigger value="revenue">{t.revenue}</TabsTrigger>
-          <TabsTrigger value="members">{t.members}</TabsTrigger>
-        </TabsList>
-        <TabsContent value="revenue" className="space-y-4">
-          <RevenueChart />
-        </TabsContent>
-        <TabsContent value="members" className="space-y-4">
-          <MemberActivityChart />
-        </TabsContent>
-      </Tabs>
+        {/* Charts Section */}
+        <Tabs defaultValue="revenue" className="space-y-4">
+          <TabsList>
+            <TabsTrigger value="revenue">{t.revenue}</TabsTrigger>
+            <TabsTrigger value="members">{t.members}</TabsTrigger>
+          </TabsList>
+          <TabsContent value="revenue" className="space-y-4">
+            <RevenueChart />
+          </TabsContent>
+          <TabsContent value="members" className="space-y-4">
+            <MemberActivityChart />
+          </TabsContent>
+        </Tabs>
 
-      {/* Activity and Events */}
-      <div className="grid gap-4 md:grid-cols-2">
-        <RecentActivity activities={stats?.recentActivity || []} />
-        <UpcomingEvents />
+        {/* Activity and Events */}
+        <div className="grid gap-4 md:grid-cols-2">
+          <RecentActivity activities={stats?.recentActivity || []} />
+          <UpcomingEvents />
+        </div>
       </div>
-    </div>
+    </DashboardLayout>
   )
 }
