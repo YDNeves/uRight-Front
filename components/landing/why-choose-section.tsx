@@ -17,11 +17,11 @@ export function WhyChooseSection() {
       <div className="max-w-6xl mx-auto">
         <div className="grid md:grid-cols-2 gap-12 items-center">
           <div className="relative">
-            <div className="bg-gradient-to-br from-primary/20 to-accent/20 rounded-3xl p-8 organic-blob">
-              <div className="w-full h-64 bg-gradient-to-br from-primary to-secondary rounded-2xl flex items-center justify-center text-white text-center p-6">
+            <div className="bg-gradient-to-br from-primary to-accent rounded-3xl p-8 organic-blob">
+              <div className="w-full h-64 bg-gradient-to-br from-primary to-secondary rounded-2xl flex items-center justify-center text-foreground text-center p-6">
                 <div>
                   <p className="text-4xl font-bold">2.8K+</p>
-                  <p className="text-primary-foreground/80">Associações em uso</p>
+                  <p className="text-foreground">Associações em uso</p>
                 </div>
               </div>
             </div>

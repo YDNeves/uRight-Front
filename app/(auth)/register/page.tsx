@@ -1,10 +1,7 @@
 "use client"
 
-import type React from "react"
-
 import { useState } from "react"
 import Link from "next/link"
-import Image from "next/image"
 import { Button } from "@/components/ui/button"
 import { Input } from "@/components/ui/input"
 import { Label } from "@/components/ui/label"
@@ -19,6 +16,7 @@ export default function RegisterPage() {
   const [email, setEmail] = useState("")
   const [password, setPassword] = useState("")
   const [loading, setLoading] = useState(false)
+
   const { register } = useAuth()
   const { toast } = useToast()
 
@@ -34,6 +32,12 @@ export default function RegisterPage() {
         description: result.error,
         variant: "destructive",
       })
+    } else {
+      toast({
+        title: "Registo concluído!",
+        description: "A sua conta foi criada. Pode fazer login.",
+        variant: "default",
+      })
     }
 
     setLoading(false)
@@ -44,12 +48,10 @@ export default function RegisterPage() {
       <div className="w-full max-w-md space-y-8">
         <div className="flex flex-col items-center text-center">
           <div className="relative h-16 w-32 mb-4">
-            <Image
+            <img
               src="/logo.png"
               alt="uRight - Sonhos & Realizações"
-              fill
-              className="object-contain"
-              priority
+              className="object-contain w-full h-full"
             />
           </div>
           <h1 className="text-3xl font-bold tracking-tight text-cyan-400">{t.createAccount}</h1>
