@@ -13,8 +13,17 @@ interface AuthContextType {
   hasAssociation: () => boolean
   associationId: string | null
   login: (email: string, password: string) => Promise<{ success: boolean; error?: string }>
-  register: (name: string, email: string, password: string) => Promise<{ success: boolean; error?: string }>
+  loginWithOAuth: (provider: "google" | "microsoft" | "linkedin") => Promise<void>
+  register: (
+    name: string,
+    email: string,
+    password: string,
+    entityType: string,
+  ) => Promise<{ success: boolean; error?: string }>
   logout: () => void
+  verifyEmail: (token: string) => Promise<{ success: boolean; error?: string }>
+  requestPasswordReset: (email: string) => Promise<{ success: boolean; error?: string }>
+  resetPassword: (token: string, newPassword: string) => Promise<{ success: boolean; error?: string }>
 }
 
 const AuthContext = createContext<AuthContextType | undefined>(undefined)
@@ -51,7 +60,7 @@ export function AuthProvider({ children }: { children: ReactNode }) {
 
     if (response.data) {
       setCookie(null, "auth_token", response.data.token, {
-        maxAge: 30 * 24 * 60 * 60, // 30 dias
+        maxAge: 30 * 24 * 60 * 60,
         path: "/",
         sameSite: "lax",
       })
@@ -65,22 +74,51 @@ export function AuthProvider({ children }: { children: ReactNode }) {
     return { success: false, error: response.error || "Login failed" }
   }
 
-  const register = async (name: string, email: string, password: string) => {
-    const response = await authApi.register(name, email, password)
+  const loginWithOAuth = async (provider: "google" | "microsoft" | "linkedin") => {
+    // Redirect to backend OAuth endpoint
+    window.location.href = `${process.env.NEXT_PUBLIC_API_URL}/auth/oauth/${provider}`
+  }
+
+  const register = async (name: string, email: string, password: string, entityType: string) => {
+    const response = await authApi.register(name, email, password, entityType)
 
     if (response.data) {
       setCookie(null, "auth_token", response.data.token, {
-        maxAge: 30 * 24 * 60 * 60, // 30 dias
+        maxAge: 30 * 24 * 60 * 60,
         path: "/",
         sameSite: "lax",
       })
 
       setUser(response.data.user)
-      router.push("/onboarding")
+      router.push("/verify-email")
       return { success: true }
     }
 
     return { success: false, error: response.error || "Registration failed" }
+  }
+
+  const verifyEmail = async (token: string) => {
+    const response = await authApi.verifyEmail(token)
+    if (response.data) {
+      return { success: true }
+    }
+    return { success: false, error: response.error || "Email verification failed" }
+  }
+
+  const requestPasswordReset = async (email: string) => {
+    const response = await authApi.requestPasswordReset(email)
+    if (response.data) {
+      return { success: true }
+    }
+    return { success: false, error: response.error || "Request failed" }
+  }
+
+  const resetPassword = async (token: string, newPassword: string) => {
+    const response = await authApi.resetPassword(token, newPassword)
+    if (response.data) {
+      return { success: true }
+    }
+    return { success: false, error: response.error || "Reset failed" }
   }
 
   const logout = () => {
@@ -107,8 +145,12 @@ export function AuthProvider({ children }: { children: ReactNode }) {
         hasAssociation,
         associationId: user?.associationId || null,
         login,
+        loginWithOAuth,
         register,
         logout,
+        verifyEmail,
+        requestPasswordReset,
+        resetPassword,
       }}
     >
       {children}

@@ -30,7 +30,7 @@ export function HeroSection() {
 
             <div className="flex flex-col sm:flex-row gap-4">
               <Link href="/auth/register">
-                <Button size="lg" className="bg-secondary hover:bg-secondary/90 w-full sm:w-auto">
+                <Button size="lg" className="bg-white hover:bg-secondary/90 w-full sm:w-auto">
                   Começar Agora <ArrowRight className="ml-2 w-4 h-4" />
                 </Button>
               </Link>

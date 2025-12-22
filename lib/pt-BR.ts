@@ -22,8 +22,8 @@ export const translations = {
 
   // Dashboard
   dashboard: {
-    title: "Painel de controle",
-    welcome: "Bem-vindo de volta! Aqui está uma visão geral das suas associações.",
+    title: "Painel de Controle",
+    welcome: "Bem-vindo de volta! Aqui está uma visão geral das suas atividades.",
     totalMembers: "Total de Membros",
     allRegistered: "Todos os membros registrados",
     activeMembers: "Membros Ativos",
@@ -51,7 +51,7 @@ export const translations = {
 
   // Navegação
   nav: {
-    dashboard: "Painel de controle",
+    dashboard: "Painel de Controle",
     associations: "Associações",
     members: "Membros",
     payments: "Pagamentos",

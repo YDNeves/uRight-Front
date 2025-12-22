@@ -41,10 +41,28 @@ export const authApi = {
       body: JSON.stringify({ email, password }),
     }),
 
-  register: (name: string, email: string, password: string) =>
+  register: (name: string, email: string, password: string, entityType: string) =>
     fetchApi<{ user: any; token: string }>("/auth/register", {
       method: "POST",
-      body: JSON.stringify({ name, email, password }),
+      body: JSON.stringify({ name, email, password, entityType }),
+    }),
+
+  verifyEmail: (token: string) =>
+    fetchApi("/auth/verify-email", {
+      method: "POST",
+      body: JSON.stringify({ token }),
+    }),
+
+  requestPasswordReset: (email: string) =>
+    fetchApi("/auth/forgot-password", {
+      method: "POST",
+      body: JSON.stringify({ email }),
+    }),
+
+  resetPassword: (token: string, newPassword: string) =>
+    fetchApi("/auth/reset-password", {
+      method: "POST",
+      body: JSON.stringify({ token, newPassword }),
     }),
 
   logout: () => fetchApi("/auth/logout", { method: "POST" }),

@@ -1,7 +1,7 @@
 "use client"
 
 import { useEffect, useState } from "react"
-import { Plus, Search, MoreHorizontal, Pencil, Trash2, Users, Mail, Phone } from "lucide-react"
+import { Plus, Search, MoreHorizontal, Pencil, Trash2, Users, Mail, Phone, Clock } from "lucide-react"
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "@/components/ui/card"
 import { Button } from "@/components/ui/button"
 import { Input } from "@/components/ui/input"
@@ -16,6 +16,7 @@ import type { Member } from "@/lib/types"
 import { MemberDialog } from "@/components/members/member-dialog"
 import { DeleteMemberDialog } from "@/components/members/delete-member-dialog"
 import { format } from "date-fns"
+import Link from "next/link"
 
 export default function MembersPage() {
   const [members, setMembers] = useState<Member[]>([])
@@ -104,57 +105,66 @@ export default function MembersPage() {
   }
 
   return (
-    <div className="flex flex-col gap-6 p-6">
+    <div className="flex flex-col gap-6 p-8">
       <div className="flex items-center justify-between">
         <div>
-          <h1 className="text-3xl font-bold">Members</h1>
-          <p className="text-muted-foreground">Manage all members across your associations</p>
+          <h1 className="text-3xl font-bold">Membros</h1>
+          <p className="text-muted-foreground mt-1">Gerencie todos os membros das suas associações</p>
         </div>
-        <Button onClick={handleCreate}>
-          <Plus className="h-4 w-4" />
-          Add Member
-        </Button>
+        <div className="flex gap-2">
+          <Link href="/members/requests">
+            <Button variant="outline">
+              <Clock className="h-4 w-4 mr-2" />
+              Pedidos Pendentes
+            </Button>
+          </Link>
+          <Button onClick={handleCreate}>
+            <Plus className="h-4 w-4 mr-2" />
+            Adicionar Membro
+          </Button>
+        </div>
       </div>
 
       <Card>
         <CardHeader>
           <div className="flex flex-col gap-4 sm:flex-row sm:items-center sm:justify-between">
             <div className="flex-1">
-              <CardTitle>All Members</CardTitle>
+              <CardTitle>Todos os Membros</CardTitle>
               <CardDescription>
-                {filteredMembers.length} member{filteredMembers.length !== 1 ? "s" : ""} found
+                {filteredMembers.length} membro{filteredMembers.length !== 1 ? "s" : ""} encontrado
+                {filteredMembers.length !== 1 ? "s" : ""}
               </CardDescription>
             </div>
             <div className="flex flex-col gap-2 sm:flex-row sm:items-center">
               <div className="relative w-full sm:w-64">
                 <Search className="absolute left-3 top-1/2 h-4 w-4 -translate-y-1/2 text-muted-foreground" />
                 <Input
-                  placeholder="Search members..."
+                  placeholder="Pesquisar membros..."
                   value={searchQuery}
                   onChange={(e) => setSearchQuery(e.target.value)}
-                  className="pl-9"
+                  className="pl-10"
                 />
               </div>
               <Select value={typeFilter} onValueChange={setTypeFilter}>
                 <SelectTrigger className="w-full sm:w-40">
-                  <SelectValue placeholder="Type" />
+                  <SelectValue placeholder="Tipo" />
                 </SelectTrigger>
                 <SelectContent>
-                  <SelectItem value="all">All Types</SelectItem>
+                  <SelectItem value="all">Todos os Tipos</SelectItem>
                   <SelectItem value="regular">Regular</SelectItem>
-                  <SelectItem value="honorary">Honorary</SelectItem>
-                  <SelectItem value="associate">Associate</SelectItem>
+                  <SelectItem value="honorary">Honorário</SelectItem>
+                  <SelectItem value="associate">Associado</SelectItem>
                 </SelectContent>
               </Select>
               <Select value={statusFilter} onValueChange={setStatusFilter}>
                 <SelectTrigger className="w-full sm:w-40">
-                  <SelectValue placeholder="Status" />
+                  <SelectValue placeholder="Estado" />
                 </SelectTrigger>
                 <SelectContent>
-                  <SelectItem value="all">All Status</SelectItem>
-                  <SelectItem value="active">Active</SelectItem>
-                  <SelectItem value="inactive">Inactive</SelectItem>
-                  <SelectItem value="suspended">Suspended</SelectItem>
+                  <SelectItem value="all">Todos os Estados</SelectItem>
+                  <SelectItem value="active">Ativo</SelectItem>
+                  <SelectItem value="inactive">Inativo</SelectItem>
+                  <SelectItem value="suspended">Suspenso</SelectItem>
                 </SelectContent>
               </Select>
             </div>
@@ -167,18 +177,18 @@ export default function MembersPage() {
                 <EmptyMedia variant="icon">
                   <Users />
                 </EmptyMedia>
-                <EmptyTitle>No members found</EmptyTitle>
+                <EmptyTitle>Nenhum membro encontrado</EmptyTitle>
                 <EmptyDescription>
                   {searchQuery || statusFilter !== "all" || typeFilter !== "all"
-                    ? "Try adjusting your filters to find what you're looking for."
-                    : "Get started by adding your first member."}
+                    ? "Tente ajustar seus filtros"
+                    : "Comece adicionando seu primeiro membro"}
                 </EmptyDescription>
               </EmptyHeader>
               {!searchQuery && statusFilter === "all" && typeFilter === "all" && (
                 <EmptyContent>
                   <Button onClick={handleCreate}>
-                    <Plus className="h-4 w-4" />
-                    Add Member
+                    <Plus className="h-4 w-4 mr-2" />
+                    Adicionar Membro
                   </Button>
                 </EmptyContent>
               )}
@@ -187,11 +197,11 @@ export default function MembersPage() {
             <Table>
               <TableHeader>
                 <TableRow>
-                  <TableHead>Name</TableHead>
-                  <TableHead>Contact</TableHead>
-                  <TableHead>Type</TableHead>
-                  <TableHead>Join Date</TableHead>
-                  <TableHead>Status</TableHead>
+                  <TableHead>Nome</TableHead>
+                  <TableHead>Contato</TableHead>
+                  <TableHead>Tipo</TableHead>
+                  <TableHead>Data de Entrada</TableHead>
+                  <TableHead>Estado</TableHead>
                   <TableHead className="w-[50px]"></TableHead>
                 </TableRow>
               </TableHeader>
@@ -215,10 +225,14 @@ export default function MembersPage() {
                     </TableCell>
                     <TableCell>
                       <Badge variant="outline" className="capitalize">
-                        {member.membershipType}
+                        {member.membershipType === "regular"
+                          ? "Regular"
+                          : member.membershipType === "honorary"
+                            ? "Honorário"
+                            : "Associado"}
                       </Badge>
                     </TableCell>
-                    <TableCell>{format(new Date(member.joinDate), "MMM dd, yyyy")}</TableCell>
+                    <TableCell>{format(new Date(member.joinDate), "dd MMM yyyy")}</TableCell>
                     <TableCell>
                       <Badge
                         variant={
@@ -229,7 +243,7 @@ export default function MembersPage() {
                               : "secondary"
                         }
                       >
-                        {member.status}
+                        {member.status === "active" ? "Ativo" : member.status === "suspended" ? "Suspenso" : "Inativo"}
                       </Badge>
                     </TableCell>
                     <TableCell>
@@ -241,12 +255,12 @@ export default function MembersPage() {
                         </DropdownMenuTrigger>
                         <DropdownMenuContent align="end">
                           <DropdownMenuItem onClick={() => handleEdit(member)}>
-                            <Pencil className="h-4 w-4" />
-                            Edit
+                            <Pencil className="h-4 w-4 mr-2" />
+                            Editar
                           </DropdownMenuItem>
                           <DropdownMenuItem onClick={() => handleDelete(member)} className="text-destructive">
-                            <Trash2 className="h-4 w-4" />
-                            Delete
+                            <Trash2 className="h-4 w-4 mr-2" />
+                            Eliminar
                           </DropdownMenuItem>
                         </DropdownMenuContent>
                       </DropdownMenu>
