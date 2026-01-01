@@ -21,6 +21,7 @@ import type { Permission } from "@/lib/types"
 import { translations } from "@/lib/pt-BR"
 import { useState } from "react"
 import { Button } from "@/components/ui/button"
+import Image from "next/image"
 
 const t = translations.nav
 
@@ -58,12 +59,13 @@ export function AppSidebar() {
       {/* Header */}
       <div className="flex h-16 items-center justify-between border-b border-border px-4">
         {isOpen && (
-          <div className="flex items-center gap-2">
-            <div className="flex h-8 w-8 items-center justify-center rounded-lg bg-primary text-primary-foreground font-bold">
-              U
-            </div>
-            <span className="text-lg font-semibold truncate">uRight</span>
-          </div>
+             <Image
+             src="/logo.png"
+             alt="Descrição da imagem"
+             width={125}
+             height={125}
+             className="rounded-lg"
+           />
         )}
         <Button variant="ghost" size="icon" className="h-8 w-8" onClick={() => setIsOpen(!isOpen)}>
           <ChevronDown className={cn("h-4 w-4 transition-transform", !isOpen && "-rotate-90")} />

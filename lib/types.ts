@@ -2,7 +2,7 @@ export interface User {
   id: string
   email: string
   name: string
-  role: "superadmin" | "admin" | "treasurer" | "member"
+  role: "superadmin" | "admin" | "treasurer" | "member" | "secretary"
   associationId: string | null
   permissions: Permission[]
   hasCompletedOnboarding: boolean
@@ -42,6 +42,7 @@ export const ROLE_PERMISSIONS: Record<User["role"], Permission[]> = {
     "manage_settings",
   ],
   treasurer: ["view_dashboard", "manage_payments", "manage_members", "view_reports"],
+  secretary: ["view_dashboard", "manage_payments", "manage_members", "view_reports"],
   member: ["view_dashboard"],
 }
 

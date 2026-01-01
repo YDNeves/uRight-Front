@@ -63,6 +63,7 @@ export default function DashboardPage() {
   const isMember = user?.role === "member"
   const isTreasurer = user?.role === "treasurer"
   const isAdmin = user?.role === "admin" || user?.role === "superadmin"
+  const isSecretary = user?.role === "secretary" 
 
   const statCards = [
     {
@@ -128,7 +129,7 @@ export default function DashboardPage() {
           </div>
           <Badge variant="outline" className="h-fit">
             <Eye className="h-3 w-3 mr-1" />
-            {user?.role.toUpperCase()}
+            {user?.role?.toUpperCase()}
           </Badge>
         </div>
       </div>

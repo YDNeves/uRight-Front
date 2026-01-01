@@ -8,24 +8,46 @@ interface ApiResponse<T> {
   message?: string
 }
 
-async function fetchApi<T>(endpoint: string, options?: RequestInit): Promise<ApiResponse<T>> {
+export async function fetchApi<T>(
+  endpoint: string,
+  options: RequestInit = {}
+): Promise<ApiResponse<T>> {
   try {
     const cookies = parseCookies()
     const token = cookies.auth_token
 
+    const headers = new Headers(options.headers)
+
+    // 🔐 Authorization
+    if (token) {
+      headers.set("Authorization", `Bearer ${token}`)
+    }
+
+    // 🧠 Detecta FormData
+    const isFormData = options.body instanceof FormData
+
+    // 📦 Só define Content-Type se NÃO for FormData
+    if (!isFormData && !headers.has("Content-Type")) {
+      headers.set("Content-Type", "application/json")
+    }
+
     const response = await fetch(`${API_BASE_URL}${endpoint}`, {
       ...options,
-      headers: {
-        "Content-Type": "application/json",
-        ...(token && { Authorization: `Bearer ${token}` }),
-        ...options?.headers,
-      },
+      headers,
+      credentials: "include", // seguro se usares cookie também
     })
 
-    const data = await response.json()
+    const contentType = response.headers.get("content-type")
+
+    const data =
+      contentType && contentType.includes("application/json")
+        ? await response.json()
+        : await response.text()
 
     if (!response.ok) {
-      return { error: data.message || "Erro ao processar a requisição" }
+      return {
+        error: data?.message || "Erro ao processar a requisição",
+      }
     }
 
     return { data }
@@ -33,6 +55,8 @@ async function fetchApi<T>(endpoint: string, options?: RequestInit): Promise<Api
     return { error: "Erro de conexão. Tente novamente." }
   }
 }
+
+
 
 export const authApi = {
   login: (email: string, password: string) =>
@@ -75,21 +99,41 @@ export const dashboardApi = {
 }
 
 export const associationsApi = {
-  getAll: () => fetchApi<any[]>("/associacoes"),
-  getById: (id: string) => fetchApi<any>(`/associacoes/${id}`),
-  create: (data: any) =>
-    fetchApi<any>("/associacoes", {
+  getAll: () => fetchApi<any[]>("/associations"),
+  getById: (id: string) => fetchApi<any>(`/associations/${id}`),
+  getRandom: (limit: number) => fetchApi<any[]>(`/associations/random?limit=${limit}`),
+  create: (data: FormData | object) =>
+    fetchApi<{ id: string; name: string }>("/associations", {
       method: "POST",
-      body: JSON.stringify(data),
+      body: data instanceof FormData ? data : JSON.stringify(data),
     }),
-  update: (id: string, data: any) =>
-    fetchApi<any>(`/associacoes/${id}`, {
-      method: "PUT",
-      body: JSON.stringify(data),
-    }),
-  delete: (id: string) => fetchApi(`/associacoes/${id}`, { method: "DELETE" }),
-}
+    update: (
+      id: string,
+      data: Partial<{ name: string; province: string; imageUrl: string }>
+    ) =>
+      fetchApi<any>(`/associations/${id}`, {
+        method: "PUT",
+        body: JSON.stringify(data),
+      }),
+  delete: (id: string) => fetchApi(`/associations/${id}`, { method: "DELETE" }),
 
+  // Upload de imagem
+  uploadImage: (file: File) => {
+    const formData = new FormData()
+    formData.append("file", file)
+    return fetchApi<{ imageUrl: string }>("/associations/upload-image", {
+      method: "POST",
+      body: formData,
+    })
+  },
+
+  // Atualiza URL da imagem da associação
+  updateImageUrl: (id: string, imageUrl: string) =>
+    fetchApi(`/associations/${id}/image`, {
+      method: "PATCH",
+      body: JSON.stringify({ imageUrl }),
+    }),
+}
 export const membersApi = {
   getAll: () => fetchApi<any[]>("/membros"),
   getById: (id: string) => fetchApi<any>(`/membros/${id}`),

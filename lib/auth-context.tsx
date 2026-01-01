@@ -90,7 +90,8 @@ export function AuthProvider({ children }: { children: ReactNode }) {
       })
 
       setUser(response.data.user)
-      router.push("/verify-email")
+      router.push("/onboarding")
+      //router.push("/verify-email")
       return { success: true }
     }
 
@@ -129,7 +130,7 @@ export function AuthProvider({ children }: { children: ReactNode }) {
 
   const hasPermission = (permission: Permission): boolean => {
     if (!user) return false
-    return user.permissions.includes(permission)
+    return user?.permissions?.includes(permission)??false
   }
 
   const hasAssociation = (): boolean => {
